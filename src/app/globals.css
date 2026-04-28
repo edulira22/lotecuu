@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+/* ── Design tokens ─────────────────────────────── */
+@theme {
+  /* Surfaces */
+  --color-surface:     #FAFAF7;
+  --color-surface-alt: #ECEFF3;
+  --color-dark:        #1E232B;
+
+  /* Text */
+  --color-text-base:  #1E232B;
+  --color-text-muted: #5F5E5A;
+  --color-gray-mid:   #AEB7C2;
+
+  /* Brand */
+  --color-orange:      #E56A2E;
+  --color-orange-soft: #FCE9DD;
+  --color-orange-deep: #B14E1F;
+  --color-teal:        #255C7A;
+  --color-teal-soft:   #DCE8EE;
+
+  /* WhatsApp */
+  --color-whatsapp:      #25D366;
+  --color-whatsapp-deep: #128C7E;
+
+  /* Status */
+  --color-status-green-bg: #EAF3DE;
+  --color-status-green-fg: #3B6D11;
+  --color-status-amber-bg: #FAEEDA;
+  --color-status-amber-fg: #854F0B;
+  --color-status-gray-bg:  #F1EFE8;
+  --color-status-gray-fg:  #5F5E5A;
+
+  /* Radii */
+  --radius-card: 12px;
+  --radius-chip: 8px;
+  --radius-pill: 9999px;
+
+  /* Font */
+  --font-sans: var(--font-manrope, 'Manrope'), 'DM Sans', system-ui, sans-serif;
+}
+
+/* Alpha hairlines — not expressible in @theme */
+:root {
+  --gray-line:        rgba(30, 35, 43, 0.08);
+  --gray-line-strong: rgba(30, 35, 43, 0.14);
+}
+
+/* Hairline border utilities */
+@utility border-hairline {
+  border-width: 0.5px;
+}
+@utility border-t-hairline {
+  border-top-width: 0.5px;
+}
+@utility border-b-hairline {
+  border-bottom-width: 0.5px;
+}
+
+/* Base */
+html {
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.005em;
+}
+
+body {
+  background-color: var(--color-surface);
+  color: var(--color-text-base);
+  font-family: var(--font-sans);
+}
+
+/* Hide scrollbars on scroll containers */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }

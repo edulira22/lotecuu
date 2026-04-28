@@ -1,0 +1,255 @@
+/* LoteCUU — design tokens & shared styles */
+:root {
+  --bg-primary: #FAFAF7;
+  --bg-secondary: #ECEFF3;
+  --bg-dark: #1E232B;
+  --text-primary: #1E232B;
+  --text-muted: #5F5E5A;
+  --gray-mid: #AEB7C2;
+  --gray-line: rgba(30, 35, 43, 0.08);
+  --gray-line-strong: rgba(30, 35, 43, 0.14);
+
+  --orange: #E56A2E;
+  --orange-soft: #FCE9DD;
+  --orange-deep: #B14E1F;
+
+  --teal: #255C7A;
+  --teal-soft: #DCE8EE;
+
+  --status-green-bg: #EAF3DE;
+  --status-green-fg: #3B6D11;
+  --status-amber-bg: #FAEEDA;
+  --status-amber-fg: #854F0B;
+  --status-gray-bg:  #F1EFE8;
+  --status-gray-fg:  #5F5E5A;
+
+  --whatsapp: #25D366;
+  --whatsapp-deep: #128C7E;
+
+  --radius-card: 12px;
+  --radius-chip: 8px;
+  --radius-pill: 999px;
+
+  --font: 'Manrope', 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+.lc-screen {
+  font-family: var(--font);
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+}
+
+.lc-screen * { box-sizing: border-box; }
+
+/* Eyebrow / micro-label */
+.lc-eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+/* Reusable button base */
+.lc-btn {
+  font-family: var(--font);
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-pill);
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+.lc-btn:active { transform: translateY(0.5px); }
+
+.lc-btn--orange {
+  background: var(--orange);
+  color: #fff;
+}
+.lc-btn--orange:hover { background: var(--orange-deep); }
+
+.lc-btn--whatsapp {
+  background: var(--orange);
+  color: #fff;
+}
+.lc-btn--whatsapp:hover { background: var(--orange-deep); }
+
+.lc-btn--ghost {
+  background: transparent;
+  color: var(--text-primary);
+  border: 0.5px solid var(--gray-line-strong);
+}
+.lc-btn--ghost:hover { background: var(--bg-secondary); }
+
+.lc-btn--dark {
+  background: var(--bg-dark);
+  color: #fff;
+}
+
+/* Status pills */
+.lc-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 4px 9px;
+  border-radius: var(--radius-pill);
+}
+.lc-status--available { background: var(--status-green-bg); color: var(--status-green-fg); }
+.lc-status--reserved  { background: var(--status-amber-bg); color: var(--status-amber-fg); }
+.lc-status--sold      { background: var(--status-gray-bg);  color: var(--status-gray-fg); }
+
+.lc-status .dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: currentColor;
+}
+
+/* Featured pill */
+.lc-featured {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 4px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--orange);
+  color: #fff;
+}
+
+/* Spec chip */
+.lc-chip {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: var(--radius-chip);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* Filter chip */
+.lc-filter {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 7px 13px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-secondary);
+  color: #4B515A;
+  cursor: pointer;
+  white-space: nowrap;
+  border: 0.5px solid transparent;
+  transition: all 0.15s;
+}
+.lc-filter:hover { background: #E2E6EC; }
+.lc-filter--active {
+  background: var(--bg-dark);
+  color: #fff;
+}
+.lc-filter--featured {
+  background: var(--orange-soft);
+  color: var(--orange-deep);
+}
+.lc-filter--featured.lc-filter--active {
+  background: var(--orange);
+  color: #fff;
+}
+
+/* Avatar */
+.lc-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--orange-soft);
+  color: var(--orange-deep);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+/* Card */
+.lc-card {
+  background: #fff;
+  border: 0.5px solid var(--gray-line);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  transition: border-color 0.18s, transform 0.18s;
+}
+.lc-card:hover {
+  border-color: var(--gray-line-strong);
+}
+
+/* Photo placeholder gradients (stand-in for real car photos).
+   Designed to evoke "car on lot" without being literal. */
+.lc-photo {
+  position: relative;
+  background: var(--bg-secondary);
+  overflow: hidden;
+}
+.lc-photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.25));
+  pointer-events: none;
+}
+
+/* Sticky-mobile WhatsApp button shadow */
+.lc-mobile-cta-shadow {
+  box-shadow: 0 -10px 24px rgba(30, 35, 43, 0.06);
+}
+
+/* Smooth scroll bars hidden in scroll containers */
+.lc-noscroll::-webkit-scrollbar { display: none; }
+.lc-noscroll { scrollbar-width: none; }
+
+/* Description / quote box */
+.lc-quote {
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #3A3F47;
+}
+
+/* Spec row in detail screen */
+.lc-spec-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 0.5px solid var(--gray-line);
+}
+.lc-spec-row:last-child { border-bottom: none; }
+.lc-spec-row .label {
+  font-size: 12px;
+  color: var(--text-muted);
+  flex: 1;
+}
+.lc-spec-row .value {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Hairline divider */
+.lc-divider {
+  height: 0.5px;
+  background: var(--gray-line);
+  width: 100%;
+}

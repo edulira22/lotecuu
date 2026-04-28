@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\\\.\\(json|html|txt\\)$\")",
+      "Bash(pnpm create *)",
+      "Bash(npm --version)",
+      "Bash(npm install *)",
+      "Bash(pnpm --version)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --app --src-dir --no-eslint --import-alias \"@/*\" --yes)",
+      "Bash(npx create-next-app@latest lotecuu-tmp --typescript --tailwind --app --src-dir --no-eslint --import-alias \"@/*\" --yes)",
+      "Bash(cp 'C:/Users/eduar/OneDrive/Documentos/Claude codes/lotecuu-tmp/next.config.ts' 'C:/Users/eduar/OneDrive/Documentos/Claude codes/LoteCuu/')",
+      "Bash(cp 'C:/Users/eduar/OneDrive/Documentos/Claude codes/lotecuu-tmp/postcss.config.mjs' 'C:/Users/eduar/OneDrive/Documentos/Claude codes/LoteCuu/')",
+      "Bash(cp 'C:/Users/eduar/OneDrive/Documentos/Claude codes/lotecuu-tmp/tsconfig.json' 'C:/Users/eduar/OneDrive/Documentos/Claude codes/LoteCuu/')",
+      "Bash(cp 'C:/Users/eduar/OneDrive/Documentos/Claude codes/lotecuu-tmp/next-env.d.ts' 'C:/Users/eduar/OneDrive/Documentos/Claude codes/LoteCuu/')",
+      "Bash(cp -r 'C:/Users/eduar/OneDrive/Documentos/Claude codes/lotecuu-tmp/src' 'C:/Users/eduar/OneDrive/Documentos/Claude codes/LoteCuu/')",
+      "Bash(pnpm install *)",
+      "Bash(npm run *)",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\('deps:', Object.keys\\(p.dependencies||{}\\).join\\(', '\\)\\)\")",
+      "Bash(NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=placeholder npm run build)"
+    ]
+  }
+}
