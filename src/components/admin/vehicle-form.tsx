@@ -26,12 +26,18 @@ const schema = z.object({
   body_type: z.string().optional(),
   color: z.string().optional(),
   condition: z.string().optional(),
+  doors: z.coerce.number().int().min(1).max(10).optional().or(z.literal('')),
+  cylinders: z.coerce.number().int().min(1).max(20).optional().or(z.literal('')),
+  drive_type: z.string().optional(),
+  origin: z.enum(['', 'nacional', 'importado']),
+  has_debt: z.enum(['', 'false', 'true']),
   description: z.string().optional(),
   status: z.enum(['draft', 'published', 'hidden', 'reserved', 'sold']),
   featured: z.boolean(),
   negotiable: z.boolean(),
   accepts_trade: z.boolean(),
   financing: z.boolean(),
+  single_owner: z.boolean(),
 })
 
 type FormData = z.infer<typeof schema>
@@ -68,12 +74,18 @@ export function VehicleForm({ sellers, vehicle, photos = [] }: VehicleFormProps)
       body_type: vehicle?.body_type ?? '',
       color: vehicle?.color ?? '',
       condition: vehicle?.condition ?? '',
+      doors: vehicle?.doors ?? '',
+      cylinders: vehicle?.cylinders ?? '',
+      drive_type: vehicle?.drive_type ?? '',
+      origin: (vehicle?.origin ?? '') as '' | 'nacional' | 'importado',
+      has_debt: (vehicle?.has_debt === true ? 'true' : vehicle?.has_debt === false ? 'false' : '') as '' | 'false' | 'true',
       description: vehicle?.description ?? '',
       status: (vehicle?.status as FormData['status']) ?? 'draft',
       featured: vehicle?.featured ?? false,
       negotiable: vehicle?.negotiable ?? false,
       accepts_trade: vehicle?.accepts_trade ?? false,
       financing: vehicle?.financing ?? false,
+      single_owner: vehicle?.single_owner ?? false,
     },
   })
 
@@ -103,6 +115,12 @@ export function VehicleForm({ sellers, vehicle, photos = [] }: VehicleFormProps)
       body_type: data.body_type || null,
       color: data.color || null,
       condition: data.condition || null,
+      doors: data.doors !== '' ? Number(data.doors) : null,
+      cylinders: data.cylinders !== '' ? Number(data.cylinders) : null,
+      drive_type: data.drive_type || null,
+      origin: (data.origin || null) as 'nacional' | 'importado' | null,
+      has_debt: data.has_debt === 'true' ? true : data.has_debt === 'false' ? false : null,
+      single_owner: data.single_owner,
       description: data.description || null,
       status: data.status,
       featured: data.featured,
@@ -164,6 +182,7 @@ export function VehicleForm({ sellers, vehicle, photos = [] }: VehicleFormProps)
               ['negotiable', 'Precio negociable'],
               ['accepts_trade', 'Acepta auto a cuenta'],
               ['financing', 'Tiene financiamiento'],
+              ['single_owner', 'Único dueño'],
             ] as const).map(([field, label]) => (
               <label key={field} className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" {...register(field)} className="w-4 h-4 accent-orange" />
@@ -258,6 +277,57 @@ export function VehicleForm({ sellers, vehicle, photos = [] }: VehicleFormProps)
                 <option value="Muy bueno">Muy bueno</option>
                 <option value="Bueno">Bueno</option>
                 <option value="Regular">Regular</option>
+              </select>
+            </AdminField>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <AdminField label="Puertas">
+              <select {...register('doors')} className={selectClass} style={inputStyle}>
+                <option value="">—</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </AdminField>
+            <AdminField label="Cilindros">
+              <select {...register('cylinders')} className={selectClass} style={inputStyle}>
+                <option value="">—</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="8">8</option>
+                <option value="10">10</option>
+                <option value="12">12</option>
+              </select>
+            </AdminField>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <AdminField label="Tracción">
+              <select {...register('drive_type')} className={selectClass} style={inputStyle}>
+                <option value="">—</option>
+                <option value="4x2">4×2</option>
+                <option value="4x4">4×4</option>
+                <option value="AWD">AWD</option>
+                <option value="FWD">FWD</option>
+                <option value="RWD">RWD</option>
+              </select>
+            </AdminField>
+            <AdminField label="Procedencia">
+              <select {...register('origin')} className={selectClass} style={inputStyle}>
+                <option value="">—</option>
+                <option value="nacional">Nacional</option>
+                <option value="importado">Importado</option>
+              </select>
+            </AdminField>
+            <AdminField label="Adeudo">
+              <select {...register('has_debt')} className={selectClass} style={inputStyle}>
+                <option value="">Sin información</option>
+                <option value="false">Sin adeudo</option>
+                <option value="true">Con adeudo</option>
               </select>
             </AdminField>
           </div>

@@ -123,7 +123,6 @@ export function CarCard({ vehicle: v, wide = false }: CarCardProps) {
               href={waLink}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
               className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-pill text-[11px] font-[500] bg-whatsapp text-white hover:opacity-90 transition-opacity"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">

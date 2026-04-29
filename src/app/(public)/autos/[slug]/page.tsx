@@ -1,12 +1,15 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
-import { FilmstripGallery } from '@/components/ficha/filmstrip-gallery'
+import { PhotoGallery } from '@/components/ficha/photo-gallery'
+import { ShareButton } from '@/components/ficha/share-button'
 import { StatusPill } from '@/components/ui/status-pill'
 import { FeaturedPill } from '@/components/ui/featured-pill'
 import { Chip } from '@/components/ui/chip'
 import { Logo } from '@/components/ui/logo'
+import { CarPlaceholder, getPlaceholderTone } from '@/components/ui/car-placeholder'
 import { fmtPrice, fmtKm } from '@/lib/format'
 import { buildWhatsAppLink, vehicleInquiryText } from '@/lib/whatsapp'
 import type { VehicleStatus } from '@/lib/supabase/database.types'
@@ -17,7 +20,9 @@ type SellerRow = {
   name: string
   business_name: string | null
   whatsapp: string
+  phone: string | null
   address: string | null
+  google_maps_url: string | null
   slug: string
 }
 
@@ -45,6 +50,12 @@ type VehicleFull = {
   negotiable: boolean | null
   accepts_trade: boolean | null
   financing: boolean | null
+  has_debt: boolean | null
+  single_owner: boolean | null
+  origin: 'nacional' | 'importado' | null
+  doors: number | null
+  cylinders: number | null
+  drive_type: string | null
   description: string | null
   featured: boolean
   slug: string
@@ -83,6 +94,10 @@ const SPEC_KEYS = [
   { label: 'Tipo',         key: 'body_type',    fmt: (v: unknown) => String(v) },
   { label: 'Color',        key: 'color',        fmt: (v: unknown) => String(v) },
   { label: 'Condición',    key: 'condition',    fmt: (v: unknown) => String(v) },
+  { label: 'Puertas',      key: 'doors',        fmt: (v: unknown) => String(v) },
+  { label: 'Cilindros',    key: 'cylinders',    fmt: (v: unknown) => String(v) },
+  { label: 'Tracción',     key: 'drive_type',   fmt: (v: unknown) => String(v) },
+  { label: 'Origen',       key: 'origin',       fmt: (v: unknown) => v === 'nacional' ? 'Nacional' : 'Importado' },
 ] as const
 
 function SpecGrid({ vehicle }: { vehicle: VehicleFull }) {
@@ -122,9 +137,19 @@ function WaIcon({ size = 16 }: { size?: number }) {
 }
 
 /* ── SellerCard ──────────────────────────────────────────────── */
-function SellerCard({ seller, waLink }: { seller: SellerRow; waLink: string | null }) {
+function SellerCard({
+  seller,
+  waLink,
+  callLink,
+  mapsLink,
+}: {
+  seller: SellerRow
+  waLink: string | null
+  callLink: string | null
+  mapsLink: string | null
+}) {
   return (
-    <div className="relative rounded-xl border-hairline border-[var(--gray-line)] bg-white overflow-hidden p-4 flex flex-col gap-3.5">
+    <div className="relative rounded-xl border-hairline border-[var(--gray-line)] bg-white overflow-hidden p-4 flex flex-col gap-3">
       <div
         className="absolute top-0 left-0 right-0 h-1"
         style={{ background: 'linear-gradient(90deg, #255C7A, #E56A2E)' }}
@@ -147,17 +172,48 @@ function SellerCard({ seller, waLink }: { seller: SellerRow; waLink: string | nu
           </span>
         )}
       </div>
-      {waLink && (
-        <a
-          href={waLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-[13px] font-[500] border-hairline border-[var(--gray-line)] text-text-base hover:text-whatsapp hover:border-whatsapp transition-colors"
-        >
-          <WaIcon size={14} />
-          WhatsApp del vendedor
-        </a>
-      )}
+
+      {/* Action buttons */}
+      <div className="flex flex-col gap-2">
+        {waLink && (
+          <a
+            href={waLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-[13px] font-[500] bg-whatsapp text-white hover:opacity-90 transition-opacity"
+          >
+            <WaIcon size={14} />
+            WhatsApp
+          </a>
+        )}
+        <div className="flex gap-2">
+          {callLink && (
+            <a
+              href={callLink}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-[13px] font-[500] border-hairline border-[var(--gray-line)] text-text-base hover:border-teal hover:text-teal transition-colors"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z" />
+              </svg>
+              Llamar
+            </a>
+          )}
+          {mapsLink && (
+            <a
+              href={mapsLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-[13px] font-[500] border-hairline border-[var(--gray-line)] text-text-base hover:border-teal hover:text-teal transition-colors"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
+              </svg>
+              Ubicación
+            </a>
+          )}
+        </div>
+      </div>
+
       <Link
         href={`/vendedores/${seller.slug}`}
         className="text-[13px] text-teal font-[500] inline-flex items-center gap-1 hover:underline"
@@ -175,15 +231,34 @@ function SellerCard({ seller, waLink }: { seller: SellerRow; waLink: string | nu
 function MiniCard({
   car,
 }: {
-  car: { id: string; title: string; price: number | null; status: VehicleStatus; slug: string }
+  car: {
+    id: string
+    title: string
+    price: number | null
+    status: VehicleStatus
+    slug: string
+    coverUrl: string | null
+  }
 }) {
+  const tone = getPlaceholderTone(car.id)
   return (
     <Link
       href={`/autos/${car.slug}`}
       className="block rounded-card overflow-hidden border-hairline border-[var(--gray-line)] bg-white hover:border-[var(--gray-line-strong)] transition-colors"
     >
-      <div className="relative h-[130px] bg-surface-alt flex items-center justify-center">
-        <StatusPill status={car.status} className="absolute top-2 left-2" />
+      <div className="relative h-[130px]" style={{ background: '#0E1218' }}>
+        {car.coverUrl ? (
+          <Image
+            src={car.coverUrl}
+            alt={car.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 200px, 260px"
+          />
+        ) : (
+          <CarPlaceholder tone={tone} className="absolute inset-0" />
+        )}
+        <StatusPill status={car.status} className="absolute top-2 left-2 z-[1]" />
       </div>
       <div className="p-3 flex flex-col gap-0.5">
         <p className="text-[13px] font-[500] leading-snug">{car.title}</p>
@@ -202,12 +277,16 @@ function InfoContent({
   vehicle: v,
   waLink,
   sellerWaLink,
+  callLink,
+  mapsLink,
   flags,
   isMobile,
 }: {
   vehicle: VehicleFull
   waLink: string | null
   sellerWaLink: string | null
+  callLink: string | null
+  mapsLink: string | null
   flags: string[]
   isMobile?: boolean
 }) {
@@ -257,20 +336,35 @@ function InfoContent({
       )}
 
       {/* Desktop CTA (mobile uses sticky bottom bar) */}
-      {!isMobile && waLink && (
+      {!isMobile && (waLink ?? callLink) && (
         <div className="flex flex-col gap-2">
-          <a
-            href={waLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-[15px] font-[500] text-white bg-orange hover:bg-orange-deep transition-colors"
-          >
-            <WaIcon size={18} />
-            Contactar por WhatsApp
-          </a>
-          <p className="text-[11px] text-text-muted text-center">
-            &ldquo;{vehicleInquiryText(v.title)}&rdquo;
-          </p>
+          {waLink && (
+            <a
+              href={waLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-[15px] font-[500] text-white bg-orange hover:bg-orange-deep transition-colors"
+            >
+              <WaIcon size={18} />
+              Contactar por WhatsApp
+            </a>
+          )}
+          {callLink && (
+            <a
+              href={callLink}
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[14px] font-[500] border-hairline border-[var(--gray-line)] text-text-base hover:border-teal hover:text-teal transition-colors"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z" />
+              </svg>
+              Llamar al vendedor
+            </a>
+          )}
+          {waLink && (
+            <p className="text-[11px] text-text-muted text-center">
+              &ldquo;{vehicleInquiryText(v.title)}&rdquo;
+            </p>
+          )}
         </div>
       )}
 
@@ -295,7 +389,14 @@ function InfoContent({
       )}
 
       {/* Seller card */}
-      {v.seller && <SellerCard seller={v.seller} waLink={sellerWaLink} />}
+      {v.seller && (
+        <SellerCard
+          seller={v.seller}
+          waLink={sellerWaLink}
+          callLink={callLink}
+          mapsLink={mapsLink}
+        />
+      )}
     </div>
   )
 }
@@ -327,7 +428,7 @@ export default async function FichaPage({
     v.seller
       ? supabase
           .from('vehicles')
-          .select('id, title, price, status, slug')
+          .select('id, title, price, status, slug, vehicle_photos(url, is_cover, sort_order)')
           .eq('seller_id', v.seller.id)
           .neq('id', v.id)
           .in('status', ['published', 'reserved'])
@@ -341,9 +442,21 @@ export default async function FichaPage({
     a.is_cover === b.is_cover ? a.sort_order - b.sort_order : a.is_cover ? -1 : 1,
   )
 
-  const moreCars = (moreRaw ?? []) as unknown as {
-    id: string; title: string; price: number | null; status: VehicleStatus; slug: string
-  }[]
+  type MiniCarRaw = {
+    id: string
+    title: string
+    price: number | null
+    status: VehicleStatus
+    slug: string
+    vehicle_photos: { url: string; is_cover: boolean; sort_order: number }[]
+  }
+  const moreCars = ((moreRaw ?? []) as unknown as MiniCarRaw[]).map((c) => {
+    const cover =
+      c.vehicle_photos?.find((p) => p.is_cover) ??
+      c.vehicle_photos?.sort((a, b) => a.sort_order - b.sort_order)[0] ??
+      null
+    return { id: c.id, title: c.title, price: c.price, status: c.status, slug: c.slug, coverUrl: cover?.url ?? null }
+  })
 
   const waLink =
     v.seller?.whatsapp && v.status !== 'sold'
@@ -358,10 +471,16 @@ export default async function FichaPage({
     : null
 
   const flags = [
-    v.negotiable && 'Precio negociable',
+    v.negotiable    && 'Precio negociable',
     v.accepts_trade && 'Acepta cambio',
-    v.financing && 'Financiamiento disponible',
+    v.financing     && 'Financiamiento disponible',
+    v.single_owner  && 'Único dueño',
+    v.has_debt      === false && 'Sin adeudo',
+    v.has_debt      === true  && 'Con adeudo',
   ].filter(Boolean) as string[]
+
+  const callLink = v.seller?.phone ? `tel:${v.seller.phone.replace(/\D/g, '')}` : null
+  const mapsLink = v.seller?.google_maps_url ?? null
 
   // Fire-and-forget view event
   void supabase.from('vehicle_events').insert({
@@ -385,15 +504,7 @@ export default async function FichaPage({
         <Logo size="sm" />
       </div>
       <div className="flex-1 md:flex-none" />
-      <button
-        className="inline-flex items-center gap-1.5 text-[12px] font-[500] text-text-muted hover:text-text-base transition-colors px-2.5 py-1.5 rounded-lg border-hairline border-[var(--gray-line)]"
-        aria-label="Compartir"
-      >
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" />
-        </svg>
-        <span className="hidden md:inline">Compartir</span>
-      </button>
+      <ShareButton title={v.title} price={v.price ? fmtPrice(v.price) : null} />
     </div>
   )
 
@@ -403,7 +514,7 @@ export default async function FichaPage({
 
       {/* ── Desktop ─────────────────────────────────── */}
       <div className="hidden md:grid md:grid-cols-[1.4fr_1fr] md:gap-10 md:px-10 md:py-8 md:items-start">
-        <FilmstripGallery
+        <PhotoGallery
           photos={sortedPhotos}
           vehicleId={v.id}
           vehicleTitle={v.title}
@@ -412,6 +523,8 @@ export default async function FichaPage({
           vehicle={v}
           waLink={waLink}
           sellerWaLink={sellerWaLink}
+          callLink={callLink}
+          mapsLink={mapsLink}
           flags={flags}
         />
 
@@ -439,17 +552,18 @@ export default async function FichaPage({
 
       {/* ── Mobile ──────────────────────────────────── */}
       <div className="md:hidden">
-        <FilmstripGallery
+        <PhotoGallery
           photos={sortedPhotos}
           vehicleId={v.id}
           vehicleTitle={v.title}
-          mobile
         />
         <div className="px-5 py-5 pb-32">
           <InfoContent
             vehicle={v}
             waLink={waLink}
             sellerWaLink={sellerWaLink}
+            callLink={callLink}
+            mapsLink={mapsLink}
             flags={flags}
             isMobile
           />

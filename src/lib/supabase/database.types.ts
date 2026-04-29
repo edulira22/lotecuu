@@ -83,6 +83,12 @@ export type Database = {
           negotiable: boolean | null
           accepts_trade: boolean | null
           financing: boolean | null
+          has_debt: boolean | null
+          single_owner: boolean | null
+          origin: 'nacional' | 'importado' | null
+          doors: number | null
+          cylinders: number | null
+          drive_type: string | null
           description: string | null
           status: VehicleStatus
           featured: boolean
@@ -111,6 +117,12 @@ export type Database = {
           negotiable?: boolean | null
           accepts_trade?: boolean | null
           financing?: boolean | null
+          has_debt?: boolean | null
+          single_owner?: boolean | null
+          origin?: 'nacional' | 'importado' | null
+          doors?: number | null
+          cylinders?: number | null
+          drive_type?: string | null
           description?: string | null
           status?: VehicleStatus
           featured?: boolean
@@ -139,6 +151,12 @@ export type Database = {
           negotiable?: boolean | null
           accepts_trade?: boolean | null
           financing?: boolean | null
+          has_debt?: boolean | null
+          single_owner?: boolean | null
+          origin?: 'nacional' | 'importado' | null
+          doors?: number | null
+          cylinders?: number | null
+          drive_type?: string | null
           description?: string | null
           status?: VehicleStatus
           featured?: boolean

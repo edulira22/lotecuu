@@ -18,6 +18,12 @@ export function Navbar() {
         >
           Vendedores
         </Link>
+        <Link
+          href="/acerca"
+          className="text-[14px] text-text-muted hover:text-text-base transition-colors"
+        >
+          Acerca
+        </Link>
       </nav>
       <div className="hidden md:flex items-center gap-2.5">
         <Link
