@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/browser'
 import { slugify } from '@/lib/format'
 import { AdminField, inputClass, inputStyle } from './admin-field'
+import { SellerPhotoUploader } from './seller-photo-uploader'
 import type { Seller } from '@/lib/supabase/database.types'
 
 const schema = z.object({
@@ -32,6 +33,7 @@ export function SellerForm({ seller }: SellerFormProps) {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [serverError, setServerError] = useState('')
+  const [savedSellerId, setSavedSellerId] = useState<string | null>(seller?.id ?? null)
   const isEdit = !!seller
 
   const {
@@ -86,17 +88,24 @@ export function SellerForm({ seller }: SellerFormProps) {
         .update(payload)
         .eq('id', seller.id)
       if (error) { setServerError(error.message); setSaving(false); return }
+      router.push('/admin/vendedores')
+      router.refresh()
     } else {
-      const { error } = await supabase.from('sellers').insert(payload)
+      const { data: created, error } = await supabase
+        .from('sellers')
+        .insert(payload)
+        .select()
+        .single()
       if (error) { setServerError(error.message); setSaving(false); return }
+      setSavedSellerId(created.id)
+      setSaving(false)
+      return
     }
-
-    router.push('/admin/vendedores')
-    router.refresh()
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5 max-w-2xl">
+    <div className="flex flex-col max-w-2xl">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
       <div className="grid grid-cols-2 gap-5">
         <AdminField label="Nombre del lote *" error={errors.name?.message}>
           <input
@@ -205,5 +214,43 @@ export function SellerForm({ seller }: SellerFormProps) {
         </button>
       </div>
     </form>
+
+    {/* Foto de perfil — disponible una vez que el vendedor existe */}
+    {savedSellerId && (
+      <div
+        className="bg-white rounded-[14px] p-6 flex flex-col gap-5 mt-6"
+        style={{ border: '0.5px solid var(--gray-line)' }}
+      >
+        <div className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">
+          Imágenes del perfil
+        </div>
+        <div className="flex gap-8 flex-wrap">
+          <SellerPhotoUploader
+            sellerId={savedSellerId}
+            currentUrl={seller?.profile_photo_url}
+            field="profile_photo_url"
+            label="Foto de perfil"
+          />
+          <SellerPhotoUploader
+            sellerId={savedSellerId}
+            currentUrl={seller?.logo_url}
+            field="logo_url"
+            label="Logo del lote"
+          />
+        </div>
+        {!isEdit && (
+          <div className="pt-4" style={{ borderTop: '0.5px solid var(--gray-line)' }}>
+            <button
+              type="button"
+              onClick={() => router.push('/admin/vendedores')}
+              className="h-10 px-6 bg-dark text-white rounded-pill text-[13px] font-[500] hover:bg-dark/90 transition-colors cursor-pointer"
+            >
+              Listo, ver vendedores
+            </button>
+          </div>
+        )}
+      </div>
+    )}
+    </div>
   )
 }

@@ -9,32 +9,72 @@ import type { VehicleStatus } from '@/lib/supabase/database.types'
 
 export const metadata = { title: 'Autos usados en Chihuahua — LoteCUU' }
 
-type SearchParams = { f?: string; q?: string }
+type SearchParams = {
+  // new multi-param filters
+  tipo?: string
+  trans?: string
+  precio?: string
+  anio?: string
+  dest?: string
+  q?: string
+  // legacy single-param (kept for back-compat)
+  f?: string
+}
 
-function applyFilter(vehicles: FeedVehicle[], f: string, q: string): FeedVehicle[] {
-  let result = vehicles
+function applyFilter(
+  vehicles: FeedVehicle[],
+  { tipo, trans, precio, anio, dest, f, q }: SearchParams,
+): FeedVehicle[] {
+  let r = vehicles
 
+  // Text search
   if (q) {
-    const lower = q.toLowerCase()
-    result = result.filter(
-      (v) =>
-        v.title.toLowerCase().includes(lower) ||
-        (v.version ?? '').toLowerCase().includes(lower),
+    const lo = q.toLowerCase()
+    r = r.filter(
+      (v) => v.title.toLowerCase().includes(lo) || (v.version ?? '').toLowerCase().includes(lo),
     )
   }
 
-  switch (f) {
-    case 'sedan':     return result.filter((v) => v.body_type?.toLowerCase() === 'sedán')
-    case 'suv':       return result.filter((v) => v.body_type?.toLowerCase() === 'suv')
-    case 'pickup':    return result.filter((v) => v.body_type?.toLowerCase() === 'pickup')
-    case 'camioneta': return result.filter((v) => v.body_type?.toLowerCase() === 'camioneta')
-    case 'auto':      return result.filter((v) => v.transmission?.toLowerCase().includes('autom'))
-    case 'manual':    return result.filter((v) => v.transmission?.toLowerCase() === 'manual')
-    case 'featured':  return result.filter((v) => v.featured)
-    case 'budget':    return result.filter((v) => v.price !== null && v.price <= 200000)
-    case '2020plus':  return result.filter((v) => v.year !== null && v.year >= 2020)
-    default:          return result
+  // Tipo de carrocería
+  const tipoVal = tipo ?? f ?? ''
+  const TIPO_MAP: Record<string, string[]> = {
+    sedan:      ['sedán', 'sedan'],
+    suv:        ['suv'],
+    pickup:     ['pickup'],
+    camioneta:  ['camioneta'],
+    hatchback:  ['hatchback'],
+    coupe:      ['coupé', 'coupe'],
+    convertible: ['convertible'],
   }
+  if (tipoVal && TIPO_MAP[tipoVal]) {
+    r = r.filter((v) => TIPO_MAP[tipoVal].includes(v.body_type?.toLowerCase() ?? ''))
+  }
+
+  // Transmisión
+  if (trans === 'auto')   r = r.filter((v) => v.transmission?.toLowerCase().includes('autom'))
+  if (trans === 'manual') r = r.filter((v) => v.transmission?.toLowerCase() === 'manual')
+  if (trans === 'cvt')    r = r.filter((v) => v.transmission?.toLowerCase() === 'cvt')
+
+  // Presupuesto
+  const MAX_PRICE: Record<string, number> = { '150k': 150000, '250k': 250000, '400k': 400000 }
+  if (precio && MAX_PRICE[precio]) {
+    r = r.filter((v) => v.price !== null && v.price <= MAX_PRICE[precio])
+  }
+  // legacy budget filter
+  if (f === 'budget') r = r.filter((v) => v.price !== null && v.price <= 200000)
+
+  // Año mínimo
+  if (anio) {
+    const minYear = parseInt(anio, 10)
+    if (!isNaN(minYear)) r = r.filter((v) => v.year !== null && v.year >= minYear)
+  }
+  // legacy year filter
+  if (f === '2020plus') r = r.filter((v) => v.year !== null && v.year >= 2020)
+
+  // Destacados
+  if (dest === '1' || f === 'featured') r = r.filter((v) => v.featured)
+
+  return r
 }
 
 export default async function AutosPage({
@@ -42,7 +82,7 @@ export default async function AutosPage({
 }: {
   searchParams: Promise<SearchParams>
 }) {
-  const { f = 'all', q = '' } = await searchParams
+  const { tipo = '', trans = '', precio = '', anio = '', dest = '', f = '', q = '' } = await searchParams
   const supabase = await createClient()
 
   const { data: raw } = await supabase
@@ -57,7 +97,7 @@ export default async function AutosPage({
     .order('created_at', { ascending: false })
 
   const vehicles = (raw ?? []) as unknown as FeedVehicle[]
-  const filtered = applyFilter(vehicles, f, q)
+  const filtered = applyFilter(vehicles, { tipo, trans, precio, anio, dest, f, q })
   const availableCount = vehicles.filter((v) => v.status !== 'sold').length
 
   return (
@@ -66,7 +106,7 @@ export default async function AutosPage({
       <Hero count={availableCount} />
 
       <Suspense>
-        <FilterBar active={f} />
+        <FilterBar tipo={tipo} trans={trans} precio={precio} anio={anio} dest={dest} />
       </Suspense>
 
       {/* Sort bar */}

@@ -4,9 +4,11 @@ import { useState, useRef, useEffect } from 'react'
 interface ShareButtonProps {
   title: string
   price?: string | null
+  /** Render as icon-only (no text label) */
+  iconOnly?: boolean
 }
 
-export function ShareButton({ title, price }: ShareButtonProps) {
+export function ShareButton({ title, price, iconOnly = false }: ShareButtonProps) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -50,13 +52,17 @@ export function ShareButton({ title, price }: ShareButtonProps) {
     <div className="relative" ref={ref}>
       <button
         onClick={handleShare}
-        className="inline-flex items-center gap-1.5 text-[12px] font-[500] text-text-muted hover:text-text-base transition-colors px-2.5 py-1.5 rounded-lg border-hairline border-[var(--gray-line)] hover:border-[var(--gray-line-strong)]"
+        className={
+          iconOnly
+            ? 'shrink-0 w-11 h-11 rounded-xl flex items-center justify-center border-hairline border-[var(--gray-line)] text-text-muted hover:text-text-base hover:border-[var(--gray-line-strong)] transition-colors'
+            : 'inline-flex items-center gap-1.5 text-[12px] font-[500] text-text-muted hover:text-text-base transition-colors px-2.5 py-1.5 rounded-lg border-hairline border-[var(--gray-line)] hover:border-[var(--gray-line-strong)]'
+        }
         aria-label="Compartir"
       >
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" />
         </svg>
-        <span className="hidden md:inline">Compartir</span>
+        {!iconOnly && <span className="hidden md:inline">Compartir</span>}
       </button>
 
       {open && (

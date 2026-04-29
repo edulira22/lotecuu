@@ -74,7 +74,7 @@ export function Hero({ count }: { count: number }) {
         <div className="hidden md:flex items-center gap-5 mt-8">
           <p className="text-[13px] text-white/55 font-[400] leading-relaxed">
             Conectamos compradores y vendedores en Chihuahua —{' '}
-            <span className="text-white/80">sin intermediarios, directo por WhatsApp.</span>
+            <span className="text-white/80">contacto directo, sin intermediarios.</span>
           </p>
         </div>
       </div>

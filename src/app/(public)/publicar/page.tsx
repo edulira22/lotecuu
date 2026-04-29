@@ -19,13 +19,13 @@ const STEPS = [
   {
     n: '03',
     title: 'Recibe contactos directos',
-    body: 'Los compradores te escriben por WhatsApp directamente, sin formularios ni intermediarios.',
+    body: 'Los compradores te contactan directamente — por WhatsApp o llamada — sin formularios ni intermediarios.',
   },
 ]
 
 const BENEFITS = [
   { icon: '⚡', title: 'Rápido', body: 'Publica en minutos desde cualquier dispositivo.' },
-  { icon: '🔗', title: 'Directo', body: 'WhatsApp directo al comprador, sin filtros.' },
+  { icon: '🔗', title: 'Directo', body: 'Contacto directo al comprador — WhatsApp o llamada, sin filtros.' },
   { icon: '📍', title: 'Local', body: 'Plataforma 100% enfocada en Chihuahua.' },
   { icon: '✓', title: 'Verificado', body: 'Tu perfil muestra el badge de vendedor verificado.' },
 ]
@@ -58,7 +58,7 @@ export default function PublicarPage() {
             <span className="text-orange">Chihuahua</span>
           </h1>
           <p className="text-[16px] md:text-[18px] text-white/80 m-0 mb-8 max-w-[520px] leading-relaxed">
-            LoteCUU conecta tu inventario con compradores locales vía WhatsApp directo. Sin comisiones, sin formularios.
+            LoteCUU conecta tu inventario con compradores locales. Contacto directo, sin comisiones, sin formularios.
           </p>
           <div className="flex flex-wrap gap-3">
             <Link

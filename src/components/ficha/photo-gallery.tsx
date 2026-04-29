@@ -17,6 +17,7 @@ interface PhotoGalleryProps {
 export function PhotoGallery({ photos, vehicleId, vehicleTitle }: PhotoGalleryProps) {
   const [active, setActive] = useState(0)
   const [lightbox, setLightbox] = useState(false)
+  const [touchStartX, setTouchStartX] = useState<number | null>(null)
 
   const tone = getPlaceholderTone(vehicleId)
   const hasPhotos = photos.length > 0
@@ -25,6 +26,15 @@ export function PhotoGallery({ photos, vehicleId, vehicleTitle }: PhotoGalleryPr
 
   const prev = useCallback(() => setActive((i) => (i - 1 + total) % total), [total])
   const next = useCallback(() => setActive((i) => (i + 1) % total), [total])
+
+  // Touch swipe handlers
+  const handleTouchStart = (e: React.TouchEvent) => setTouchStartX(e.targetTouches[0].clientX)
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null || total <= 1) return
+    const diff = touchStartX - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 40) diff > 0 ? next() : prev()
+    setTouchStartX(null)
+  }
 
   // Keyboard navigation
   useEffect(() => {
@@ -54,6 +64,8 @@ export function PhotoGallery({ photos, vehicleId, vehicleTitle }: PhotoGalleryPr
         <div
           className="relative w-full rounded-xl overflow-hidden group"
           style={{ background: '#0E1218', aspectRatio: '16 / 10' }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         >
           {items[active] ? (
             <Image

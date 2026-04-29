@@ -10,8 +10,9 @@ import { FeaturedPill } from '@/components/ui/featured-pill'
 import { Chip } from '@/components/ui/chip'
 import { Logo } from '@/components/ui/logo'
 import { CarPlaceholder, getPlaceholderTone } from '@/components/ui/car-placeholder'
-import { fmtPrice, fmtKm } from '@/lib/format'
+import { fmtPrice, fmtKm, fmtPhone } from '@/lib/format'
 import { buildWhatsAppLink, vehicleInquiryText } from '@/lib/whatsapp'
+import { CallButton } from '@/components/ficha/call-button'
 import type { VehicleStatus } from '@/lib/supabase/database.types'
 
 /* ── Local types ─────────────────────────────────────────────── */
@@ -140,12 +141,10 @@ function WaIcon({ size = 16 }: { size?: number }) {
 function SellerCard({
   seller,
   waLink,
-  callLink,
   mapsLink,
 }: {
   seller: SellerRow
   waLink: string | null
-  callLink: string | null
   mapsLink: string | null
 }) {
   return (
@@ -187,16 +186,11 @@ function SellerCard({
           </a>
         )}
         <div className="flex gap-2">
-          {callLink && (
-            <a
-              href={callLink}
+          {seller.phone && (
+            <CallButton
+              phone={seller.phone}
               className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-[13px] font-[500] border-hairline border-[var(--gray-line)] text-text-base hover:border-teal hover:text-teal transition-colors"
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z" />
-              </svg>
-              Llamar
-            </a>
+            />
           )}
           {mapsLink && (
             <a
@@ -213,6 +207,29 @@ function SellerCard({
           )}
         </div>
       </div>
+
+      {/* Contact numbers — discreet */}
+      {(seller.whatsapp || seller.phone) && (
+        <div
+          className="flex flex-col gap-1 pt-2.5"
+          style={{ borderTop: '0.5px solid var(--gray-line)' }}
+        >
+          {seller.whatsapp && (
+            <span className="text-[11px] text-text-muted flex items-center gap-1.5">
+              <WaIcon size={10} />
+              {fmtPhone(seller.whatsapp)}
+            </span>
+          )}
+          {seller.phone && (
+            <span className="text-[11px] text-text-muted flex items-center gap-1.5">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z" />
+              </svg>
+              {fmtPhone(seller.phone)}
+            </span>
+          )}
+        </div>
+      )}
 
       <Link
         href={`/vendedores/${seller.slug}`}
@@ -346,19 +363,14 @@ function InfoContent({
               className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-[15px] font-[500] text-white bg-orange hover:bg-orange-deep transition-colors"
             >
               <WaIcon size={18} />
-              Contactar por WhatsApp
+              Contactar al vendedor
             </a>
           )}
-          {callLink && (
-            <a
-              href={callLink}
+          {callLink && v.seller?.phone && (
+            <CallButton
+              phone={v.seller.phone}
               className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[14px] font-[500] border-hairline border-[var(--gray-line)] text-text-base hover:border-teal hover:text-teal transition-colors"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z" />
-              </svg>
-              Llamar al vendedor
-            </a>
+            />
           )}
           {waLink && (
             <p className="text-[11px] text-text-muted text-center">
@@ -393,7 +405,6 @@ function InfoContent({
         <SellerCard
           seller={v.seller}
           waLink={sellerWaLink}
-          callLink={callLink}
           mapsLink={mapsLink}
         />
       )}
@@ -583,26 +594,51 @@ export default async function FichaPage({
         </div>
 
         {/* Sticky mobile bottom CTA */}
-        {waLink && (
+        {(waLink ?? callLink) && (
           <div
-            className="fixed bottom-0 left-0 right-0 z-40 flex items-center gap-3 px-5 py-3 bg-surface border-t-hairline border-[var(--gray-line)]"
+            className="fixed bottom-0 left-0 right-0 z-40 flex items-center gap-2 px-4 py-3 bg-surface border-t-hairline border-[var(--gray-line)]"
             style={{ boxShadow: '0 -4px 24px rgba(0,0,0,0.08)' }}
           >
+            {/* Price */}
             <div className="flex flex-col flex-1 min-w-0">
-              <span className="text-[11px] text-text-muted">Precio</span>
-              <span className="text-[18px] font-[500] text-orange">
+              <span className="text-[10px] text-text-muted">Precio</span>
+              <span className="text-[17px] font-[500] text-orange leading-tight">
                 {v.price ? fmtPrice(v.price) : 'Consultar'}
               </span>
             </div>
-            <a
-              href={waLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl text-[14px] font-[500] text-white bg-orange hover:bg-orange-deep transition-colors"
-            >
-              <WaIcon size={16} />
-              WhatsApp
-            </a>
+
+            {/* Call — icon only, mobile → tel: directly */}
+            {v.seller?.phone && (
+              <a
+                href={`tel:${v.seller.phone.replace(/\D/g, '')}`}
+                className="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center border-hairline border-[var(--gray-line)] text-text-base hover:text-teal hover:border-teal transition-colors"
+                aria-label="Llamar"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z" />
+                </svg>
+              </a>
+            )}
+
+            {/* Share — icon only */}
+            <ShareButton
+              title={v.title}
+              price={v.price ? fmtPrice(v.price) : null}
+              iconOnly
+            />
+
+            {/* WhatsApp — primary CTA */}
+            {waLink && (
+              <a
+                href={waLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl text-[14px] font-[500] text-white bg-orange hover:bg-orange-deep transition-colors"
+              >
+                <WaIcon size={16} />
+                Contactar
+              </a>
+            )}
           </div>
         )}
       </div>
