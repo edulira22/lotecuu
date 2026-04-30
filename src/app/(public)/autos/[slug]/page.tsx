@@ -151,7 +151,7 @@ function SellerCard({
     <div className="relative rounded-xl border-hairline border-[var(--gray-line)] bg-white overflow-hidden p-4 flex flex-col gap-3">
       <div
         className="absolute top-0 left-0 right-0 h-1"
-        style={{ background: 'linear-gradient(90deg, #255C7A, #E56A2E)' }}
+        style={{ background: 'linear-gradient(90deg, #1B768E, #FB9833)' }}
       />
       <div className="flex flex-col gap-0.5 mt-1">
         <span className="text-[10px] text-text-muted uppercase tracking-[0.1em] font-[500]">

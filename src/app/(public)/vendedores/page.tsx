@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/ui/navbar'
 
@@ -70,7 +70,7 @@ export default async function VendedoresPage() {
                   {/* Color stripe */}
                   <div
                     className="h-1"
-                    style={{ background: 'linear-gradient(90deg, #255C7A, #E56A2E)' }}
+                    style={{ background: 'linear-gradient(90deg, #1B768E, #FB9833)' }}
                   />
                   <div className="p-5 flex items-start gap-4">
                     {/* Initials plate */}
@@ -114,7 +114,7 @@ export default async function VendedoresPage() {
       {/* Footer minimal */}
       <footer
         className="px-5 md:px-10 py-8 text-[12px] opacity-60"
-        style={{ background: '#1E232B', color: 'rgba(255,255,255,0.7)', borderTop: '0.5px solid rgba(255,255,255,0.08)' }}
+        style={{ background: '#012538', color: 'rgba(255,255,255,0.7)', borderTop: '0.5px solid rgba(255,255,255,0.08)' }}
       >
         © 2026 LoteCUU · Chihuahua, México
       </footer>

@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 import { Navbar } from '@/components/ui/navbar'
 
 export const metadata = {
@@ -38,14 +38,14 @@ export default function PublicarPage() {
       {/* Hero */}
       <section
         className="px-5 md:px-10 py-12 md:py-20 relative overflow-hidden"
-        style={{ background: '#1E232B', color: '#fff' }}
+        style={{ background: '#012538', color: '#fff' }}
       >
         <svg
           className="absolute top-0 right-0 w-[360px] h-full opacity-40 pointer-events-none hidden md:block"
           viewBox="0 0 360 280"
           preserveAspectRatio="none"
         >
-          <g stroke="#E56A2E" strokeWidth="1" fill="none" opacity="0.35">
+          <g stroke="#FB9833" strokeWidth="1" fill="none" opacity="0.35">
             <path d="M40 0 L100 280" /><path d="M120 0 L180 280" /><path d="M200 0 L260 280" />
           </g>
         </svg>
@@ -90,7 +90,7 @@ export default function PublicarPage() {
             <div key={s.n} className="flex flex-col gap-3">
               <span
                 className="text-[11px] font-[600] tracking-[0.1em]"
-                style={{ fontFamily: 'ui-monospace, Menlo, monospace', color: '#E56A2E' }}
+                style={{ fontFamily: 'ui-monospace, Menlo, monospace', color: '#FB9833' }}
               >
                 {s.n}
               </span>
@@ -123,7 +123,7 @@ export default function PublicarPage() {
       {/* CTA footer */}
       <section
         className="px-5 md:px-10 py-12 md:py-16 text-center"
-        style={{ background: '#1E232B', color: '#fff' }}
+        style={{ background: '#012538', color: '#fff' }}
       >
         <h2 className="text-[28px] md:text-[36px] font-[500] tracking-[-0.02em] m-0 mb-4">
           ¿Listo para publicar?
@@ -145,7 +145,7 @@ export default function PublicarPage() {
       <footer
         className="px-5 md:px-10 py-6 text-[12px]"
         style={{
-          background: '#1E232B',
+          background: '#012538',
           color: 'rgba(255,255,255,0.5)',
           borderTop: '0.5px solid rgba(255,255,255,0.08)',
         }}

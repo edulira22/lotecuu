@@ -17,7 +17,7 @@ export function AdminSidebar() {
   return (
     <aside
       className="w-60 shrink-0 flex flex-col"
-      style={{ background: '#1E232B', minHeight: '100vh' }}
+      style={{ background: '#012538', minHeight: '100vh' }}
     >
       {/* Brand */}
       <div
@@ -37,8 +37,8 @@ export function AdminSidebar() {
               href={href}
               className="flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] text-[13px] font-[500] transition-colors"
               style={{
-                background: active ? 'rgba(229,106,46,0.18)' : 'transparent',
-                color: active ? '#FCAE7A' : 'rgba(255,255,255,0.75)',
+                background: active ? 'rgba(251,152,51,0.18)' : 'transparent',
+                color: active ? '#FBB96A' : 'rgba(255,255,255,0.75)',
               }}
             >
               <Icon size={15} />

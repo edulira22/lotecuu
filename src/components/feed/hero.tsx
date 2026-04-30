@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Logo } from '@/components/ui/logo'
 
 export function Hero({ count }: { count: number }) {
   const [query, setQuery] = useState('')
@@ -15,7 +14,7 @@ export function Hero({ count }: { count: number }) {
   return (
     <section
       className="relative overflow-hidden px-5 py-8 md:px-10 md:py-14"
-      style={{ background: '#1E232B', color: '#fff' }}
+      style={{ background: '#012538', color: '#fff' }}
     >
       {/* Road-line decoration */}
       <svg
@@ -23,12 +22,12 @@ export function Hero({ count }: { count: number }) {
         viewBox="0 0 360 280"
         preserveAspectRatio="none"
       >
-        <g stroke="#E56A2E" strokeWidth="1" fill="none" opacity="0.35">
+        <g stroke="#FB9833" strokeWidth="1" fill="none" opacity="0.35">
           <path d="M40 0 L100 280" />
           <path d="M120 0 L180 280" />
           <path d="M200 0 L260 280" />
         </g>
-        <g stroke="#255C7A" strokeWidth="1" fill="none" opacity="0.25">
+        <g stroke="#1B768E" strokeWidth="1" fill="none" opacity="0.25">
           <path d="M280 0 L340 280" />
         </g>
       </svg>

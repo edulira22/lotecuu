@@ -2,30 +2,34 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
-type Variant = 'light' | 'dark' | 'auto'
+/* ── Banner logo (horizontal) ────────────────────────────────────
+   SVG ratio ≈ 7.6 : 1  (logo-light.svg / logo-dark.svg)        */
+const BANNER_SIZES = {
+  sm: { width: 182, height: 24 },
+  md: { width: 220, height: 29 },
+  lg: { width: 274, height: 36 },
+}
 
 interface LogoProps {
-  variant?: Variant
+  /** 'light' → logo-light.svg (fondo claro)
+      'dark'  → logo-dark.svg  (fondo oscuro, texto blanco)
+      'auto'  → logo-light.svg por default */
+  variant?: 'light' | 'dark' | 'auto'
   size?: 'sm' | 'md' | 'lg'
   href?: string
   className?: string
 }
 
-const SIZE_MAP = {
-  sm: { width: 90,  height: 28 },
-  md: { width: 110, height: 34 },
-  lg: { width: 140, height: 44 },
-}
-
-export function Logo({ variant = 'auto', size = 'md', href = '/', className }: LogoProps) {
-  const { width, height } = SIZE_MAP[size]
-
-  const src =
-    variant === 'dark'
-      ? '/assets/logo-dark-bg.png'
-      : variant === 'light'
-        ? '/assets/logo-light-bg.png'
-        : '/assets/logo-transparent.png'
+export function Logo({
+  variant = 'auto',
+  size = 'md',
+  href = '/',
+  className,
+}: LogoProps) {
+  const { width, height } = BANNER_SIZES[size]
+  const src = variant === 'dark'
+    ? '/assets/logo-dark.svg'
+    : '/assets/logo-light.svg'
 
   const img = (
     <Image
@@ -38,21 +42,53 @@ export function Logo({ variant = 'auto', size = 'md', href = '/', className }: L
     />
   )
 
-  if (href) {
-    return <Link href={href} className="shrink-0">{img}</Link>
-  }
-
+  if (href) return <Link href={href} className="shrink-0">{img}</Link>
   return img
 }
 
-export function LogoMark({ size = 32, className }: { size?: number; className?: string }) {
+/* ── Icon mark (solo símbolo) ────────────────────────────────────
+   SVG ratio ≈ 2 : 1  (logo-icon.svg)                           */
+export function LogoMark({
+  size = 32,
+  className,
+}: {
+  size?: number
+  className?: string
+}) {
   return (
     <Image
-      src="/assets/logo-symbol.png"
+      src="/assets/logo-icon.svg"
       alt="LoteCUU"
-      width={size}
+      width={size * 2}
       height={size}
       className={cn('object-contain', className)}
     />
   )
+}
+
+/* ── Stacked logo (ícono + texto apilados) ───────────────────────
+   SVG ratio ≈ 1.6 : 1  (logo-stacked.svg)                      */
+export function LogoStacked({
+  width = 140,
+  href,
+  className,
+}: {
+  width?: number
+  href?: string
+  className?: string
+}) {
+  const height = Math.round(width / 1.595)
+
+  const img = (
+    <Image
+      src="/assets/logo-stacked.svg"
+      alt="LoteCUU"
+      width={width}
+      height={height}
+      className={cn('object-contain', className)}
+    />
+  )
+
+  if (href) return <Link href={href} className="shrink-0">{img}</Link>
+  return img
 }

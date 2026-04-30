@@ -1,9 +1,10 @@
-import { Suspense } from 'react'
+﻿import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/ui/navbar'
 import { Hero } from '@/components/feed/hero'
 import { FilterBar } from '@/components/feed/filter-bar'
 import { CarCard } from '@/components/feed/car-card'
+import { Logo } from '@/components/ui/logo'
 import type { FeedVehicle } from '@/components/feed/car-card'
 import type { VehicleStatus } from '@/lib/supabase/database.types'
 
@@ -137,11 +138,11 @@ export default async function AutosPage({
       </div>
 
       {/* Footer */}
-      <footer className="px-5 md:px-10 py-8 md:py-12 mt-8" style={{ background: '#1E232B', color: 'rgba(255,255,255,0.7)' }}>
+      <footer className="px-5 md:px-10 py-8 md:py-12 mt-8" style={{ background: '#012538', color: 'rgba(255,255,255,0.7)' }}>
         <div className="flex flex-col md:flex-row justify-between gap-6">
           <div>
             <div className="mb-3">
-              <span className="text-[20px] font-[600] text-white tracking-tight">LoteCUU</span>
+              <Logo variant="dark" size="sm" href="/" />
             </div>
             <p className="text-[13px] leading-relaxed max-w-[320px]">
               La vitrina digital de autos usados de Chihuahua. Hecho local, con cariño.

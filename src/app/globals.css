@@ -5,19 +5,19 @@
   /* Surfaces */
   --color-surface:     #FAFAF7;
   --color-surface-alt: #ECEFF3;
-  --color-dark:        #1E232B;
+  --color-dark:        #012538;
 
   /* Text */
-  --color-text-base:  #1E232B;
-  --color-text-muted: #5F5E5A;
+  --color-text-base:  #012538;
+  --color-text-muted: #4D555B;
   --color-gray-mid:   #AEB7C2;
 
   /* Brand */
-  --color-orange:      #E56A2E;
-  --color-orange-soft: #FCE9DD;
-  --color-orange-deep: #B14E1F;
-  --color-teal:        #255C7A;
-  --color-teal-soft:   #DCE8EE;
+  --color-orange:      #FB9833;
+  --color-orange-soft: #FEF0D9;
+  --color-orange-deep: #D97B1F;
+  --color-teal:        #1B768E;
+  --color-teal-soft:   #D0E8EE;
 
   /* WhatsApp */
   --color-whatsapp:      #25D366;
@@ -42,8 +42,8 @@
 
 /* Alpha hairlines — not expressible in @theme */
 :root {
-  --gray-line:        rgba(30, 35, 43, 0.08);
-  --gray-line-strong: rgba(30, 35, 43, 0.14);
+  --gray-line:        rgba(1, 37, 56, 0.08);
+  --gray-line-strong: rgba(1, 37, 56, 0.14);
 }
 
 /* Hairline border utilities */

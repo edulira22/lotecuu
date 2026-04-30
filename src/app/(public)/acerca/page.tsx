@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
@@ -13,7 +13,7 @@ export default function AcercaPage() {
       {/* Hero */}
       <section
         className="relative overflow-hidden px-5 py-12 md:px-10 md:py-20"
-        style={{ background: '#1E232B', color: '#fff' }}
+        style={{ background: '#012538', color: '#fff' }}
       >
         {/* Decorative lines */}
         <svg
@@ -21,11 +21,11 @@ export default function AcercaPage() {
           viewBox="0 0 300 320"
           preserveAspectRatio="none"
         >
-          <g stroke="#E56A2E" strokeWidth="1" fill="none" opacity="0.3">
+          <g stroke="#FB9833" strokeWidth="1" fill="none" opacity="0.3">
             <path d="M40 0 L100 320" />
             <path d="M140 0 L200 320" />
           </g>
-          <g stroke="#255C7A" strokeWidth="1" fill="none" opacity="0.2">
+          <g stroke="#1B768E" strokeWidth="1" fill="none" opacity="0.2">
             <path d="M240 0 L300 320" />
           </g>
         </svg>
@@ -142,7 +142,7 @@ export default function AcercaPage() {
         {/* Contacto */}
         <section
           className="rounded-[16px] p-6 md:p-8 flex flex-col gap-4"
-          style={{ background: '#1E232B', color: '#fff' }}
+          style={{ background: '#012538', color: '#fff' }}
         >
           <h2 className="text-[22px] font-[500] m-0 tracking-[-0.015em]">
             Contacto
