@@ -57,6 +57,13 @@ export function VehicleForm({ sellers, vehicle, photos = [] }: VehicleFormProps)
   const [savedVehicleId, setSavedVehicleId] = useState<string | null>(vehicle?.id ?? null)
   const isEdit = !!vehicle
 
+  // Price display state (formatted) — separate from raw form value
+  const [priceDisplay, setPriceDisplay] = useState(
+    vehicle?.price ? '$' + vehicle.price.toLocaleString('es-MX') : '',
+  )
+
+  const YEARS = Array.from({ length: new Date().getFullYear() - 1979 + 2 }, (_, i) => new Date().getFullYear() + 1 - i)
+
   const { register, handleSubmit, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -224,10 +231,27 @@ export function VehicleForm({ sellers, vehicle, photos = [] }: VehicleFormProps)
 
           <div className="grid grid-cols-3 gap-4">
             <AdminField label="Año" error={errors.year?.message}>
-              <input {...register('year')} type="number" className={inputClass} style={inputStyle} placeholder="2022" />
+              <select {...register('year')} className={selectClass} style={inputStyle}>
+                <option value="">—</option>
+                {YEARS.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
             </AdminField>
             <AdminField label="Precio (MXN)" error={errors.price?.message}>
-              <input {...register('price')} type="number" className={inputClass} style={inputStyle} placeholder="485000" />
+              <input
+                type="text"
+                inputMode="numeric"
+                value={priceDisplay}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/\D/g, '')
+                  setPriceDisplay(raw ? '$' + parseInt(raw, 10).toLocaleString('es-MX') : '')
+                  setValue('price', raw ? parseInt(raw, 10) : '')
+                }}
+                className={inputClass}
+                style={inputStyle}
+                placeholder="$195,000"
+              />
             </AdminField>
             <AdminField label="Kilometraje" error={errors.mileage?.message}>
               <input {...register('mileage')} type="number" className={inputClass} style={inputStyle} placeholder="42000" />

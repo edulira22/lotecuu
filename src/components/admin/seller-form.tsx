@@ -14,9 +14,9 @@ import type { Seller } from '@/lib/supabase/database.types'
 const schema = z.object({
   name: z.string().min(2, 'Requerido'),
   slug: z.string().min(2, 'Requerido').regex(/^[a-z0-9-]+$/, 'Solo letras, números y guiones'),
-  whatsapp: z.string().min(10, 'Número inválido'),
+  whatsapp: z.string().regex(/^\d{10}$/, 'Debe ser exactamente 10 dígitos (ej. 6141234567)'),
   business_name: z.string().optional(),
-  phone: z.string().optional(),
+  phone: z.string().regex(/^\d{10}$/, 'Debe ser exactamente 10 dígitos').optional().or(z.literal('')),
   description: z.string().optional(),
   address: z.string().optional(),
   google_maps_url: z.string().url('URL inválida').optional().or(z.literal('')),

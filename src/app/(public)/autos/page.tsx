@@ -57,7 +57,7 @@ function applyFilter(
   if (trans === 'cvt')    r = r.filter((v) => v.transmission?.toLowerCase() === 'cvt')
 
   // Presupuesto
-  const MAX_PRICE: Record<string, number> = { '150k': 150000, '250k': 250000, '400k': 400000 }
+  const MAX_PRICE: Record<string, number> = { '100k': 100000, '150k': 150000, '200k': 200000, '250k': 250000, '350k': 350000, '500k': 500000, '700k': 700000 }
   if (precio && MAX_PRICE[precio]) {
     r = r.filter((v) => v.price !== null && v.price <= MAX_PRICE[precio])
   }
@@ -70,7 +70,7 @@ function applyFilter(
     if (!isNaN(minYear)) r = r.filter((v) => v.year !== null && v.year >= minYear)
   }
   // legacy year filter
-  if (f === '2020plus') r = r.filter((v) => v.year !== null && v.year >= 2020)
+  if (f === '2020plus') r = r.filter((v) => v.year !== null && v.year >= 2021)
 
   // Destacados
   if (dest === '1' || f === 'featured') r = r.filter((v) => v.featured)

@@ -169,16 +169,29 @@ export default async function VendedorPage({
             )}
           </div>
 
-          <a
-            href={waLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden md:inline-flex shrink-0 items-center gap-2 px-5 py-3 rounded-xl text-[14px] font-[500] bg-white hover:opacity-90 transition-opacity"
-            style={{ color: '#1A4D6B' }}
-          >
-            <WaIcon size={16} />
-            Contactar lote
-          </a>
+          <div className="hidden md:flex shrink-0 items-center gap-2">
+            {seller.phone && (
+              <a
+                href={`tel:${seller.phone.replace(/\D/g, '')}`}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-[500] bg-white/15 hover:bg-white/25 transition-colors text-white"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92z" />
+                </svg>
+                Llamar
+              </a>
+            )}
+            <a
+              href={waLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-[500] bg-white hover:opacity-90 transition-opacity"
+              style={{ color: '#1A4D6B' }}
+            >
+              <WaIcon size={16} />
+              WhatsApp
+            </a>
+          </div>
         </div>
       </section>
 
@@ -272,15 +285,30 @@ export default async function VendedorPage({
             />
           </div>
 
-          <a
-            href={waLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-[14px] font-[500] text-white bg-orange hover:bg-orange-deep transition-colors"
-          >
-            <WaIcon size={16} />
-            Enviar mensaje al lote
-          </a>
+          <div className="flex gap-2">
+            {seller.phone && (
+              <a
+                href={`tel:${seller.phone.replace(/\D/g, '')}`}
+                className="flex flex-1 items-center justify-center gap-2 py-3.5 rounded-xl text-[14px] font-[500] transition-colors"
+                style={{ border: '0.5px solid var(--gray-line-strong)', color: 'var(--text-base)' }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92z" />
+                </svg>
+                Llamar
+              </a>
+            )}
+            <a
+              href={waLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-1 items-center justify-center gap-2 py-3.5 rounded-xl text-[14px] font-[500] text-white transition-colors"
+              style={{ background: '#25D366' }}
+            >
+              <WaIcon size={16} />
+              WhatsApp
+            </a>
+          </div>
         </aside>
       </div>
     </div>
