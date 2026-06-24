@@ -27,9 +27,10 @@ type FormData = z.infer<typeof schema>
 
 interface SellerFormProps {
   seller?: Seller
+  backHref?: string
 }
 
-export function SellerForm({ seller }: SellerFormProps) {
+export function SellerForm({ seller, backHref }: SellerFormProps) {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [serverError, setServerError] = useState('')
@@ -88,7 +89,7 @@ export function SellerForm({ seller }: SellerFormProps) {
         .update(payload)
         .eq('id', seller.id)
       if (error) { setServerError(error.message); setSaving(false); return }
-      router.push('/admin/vendedores')
+      router.push(backHref ?? '/admin/vendedores')
       router.refresh()
     } else {
       const { data: created, error } = await supabase

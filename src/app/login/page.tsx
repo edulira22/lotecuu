@@ -18,7 +18,7 @@ export default function LoginPage() {
     setError('')
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
       setError('Email o contraseña incorrectos')
@@ -26,7 +26,14 @@ export default function LoginPage() {
       return
     }
 
-    router.push('/admin/inventario')
+    // Check if this user is a seller or an admin
+    const { data: seller } = await supabase
+      .from('sellers')
+      .select('id')
+      .eq('auth_user_id', authData.user.id)
+      .maybeSingle()
+
+    router.push(seller ? '/vendedor/inventario' : '/admin/inventario')
     router.refresh()
   }
 
@@ -41,7 +48,7 @@ export default function LoginPage() {
           className="bg-white rounded-card p-8"
           style={{ border: '0.5px solid var(--gray-line)' }}
         >
-          <h1 className="text-[22px] font-[600] tracking-tight mb-6">Panel admin</h1>
+          <h1 className="text-[22px] font-[600] tracking-tight mb-6">Acceder</h1>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <label className="flex flex-col gap-1.5">

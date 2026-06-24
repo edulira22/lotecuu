@@ -46,11 +46,13 @@ interface VehicleFormProps {
   sellers: Seller[]
   vehicle?: Vehicle
   photos?: VehiclePhoto[]
+  lockedSellerId?: string
+  backHref?: string
 }
 
 const selectClass = `${inputClass} cursor-pointer`
 
-export function VehicleForm({ sellers, vehicle, photos = [] }: VehicleFormProps) {
+export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, backHref }: VehicleFormProps) {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [serverError, setServerError] = useState('')
@@ -67,7 +69,7 @@ export function VehicleForm({ sellers, vehicle, photos = [] }: VehicleFormProps)
   const { register, handleSubmit, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      seller_id: vehicle?.seller_id ?? '',
+      seller_id: vehicle?.seller_id ?? lockedSellerId ?? '',
       title: vehicle?.title ?? '',
       slug: vehicle?.slug ?? '',
       brand: vehicle?.brand ?? '',
@@ -139,6 +141,9 @@ export function VehicleForm({ sellers, vehicle, photos = [] }: VehicleFormProps)
     if (isEdit) {
       const { error } = await supabase.from('vehicles').update(payload).eq('id', vehicle.id)
       if (error) { setServerError(error.message); setSaving(false); return }
+      router.push(backHref ?? '/admin/inventario')
+      router.refresh()
+      return
     } else {
       const { data: created, error } = await supabase
         .from('vehicles')
@@ -151,7 +156,7 @@ export function VehicleForm({ sellers, vehicle, photos = [] }: VehicleFormProps)
       return
     }
 
-    router.push('/admin/inventario')
+    router.push(backHref ?? '/admin/inventario')
     router.refresh()
   }
 
@@ -163,6 +168,7 @@ export function VehicleForm({ sellers, vehicle, photos = [] }: VehicleFormProps)
           <div className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">Publicación</div>
 
           <div className="grid grid-cols-2 gap-5">
+            {!lockedSellerId && (
             <AdminField label="Vendedor *" error={errors.seller_id?.message}>
               <select {...register('seller_id')} className={selectClass} style={inputStyle}>
                 <option value="">Seleccionar…</option>
@@ -171,6 +177,7 @@ export function VehicleForm({ sellers, vehicle, photos = [] }: VehicleFormProps)
                 ))}
               </select>
             </AdminField>
+            )}
 
             <AdminField label="Estado" error={errors.status?.message}>
               <select {...register('status')} className={selectClass} style={inputStyle}>

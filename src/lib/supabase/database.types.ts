@@ -27,6 +27,12 @@ export type Database = {
           google_maps_url: string | null
           active: boolean
           created_at: string
+          auth_user_id: string | null
+          plan: 'basico' | 'pro' | 'premium'
+          max_vehicles: number
+          payment_status: 'al_corriente' | 'atrasado' | 'suspendido'
+          payment_notes: string | null
+          plan_expires_at: string | null
         }
         Insert: {
           id?: string
@@ -42,6 +48,12 @@ export type Database = {
           google_maps_url?: string | null
           active?: boolean
           created_at?: string
+          auth_user_id?: string | null
+          plan?: 'basico' | 'pro' | 'premium'
+          max_vehicles?: number
+          payment_status?: 'al_corriente' | 'atrasado' | 'suspendido'
+          payment_notes?: string | null
+          plan_expires_at?: string | null
         }
         Update: {
           id?: string
@@ -57,6 +69,12 @@ export type Database = {
           google_maps_url?: string | null
           active?: boolean
           created_at?: string
+          auth_user_id?: string | null
+          plan?: 'basico' | 'pro' | 'premium'
+          max_vehicles?: number
+          payment_status?: 'al_corriente' | 'atrasado' | 'suspendido'
+          payment_notes?: string | null
+          plan_expires_at?: string | null
         }
         Relationships: []
       }
