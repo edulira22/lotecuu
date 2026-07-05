@@ -1,11 +1,13 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Logo } from '@/components/ui/logo'
 import { StatusPill } from '@/components/ui/status-pill'
 import { InventoryTabs } from '@/components/seller/inventory-tabs'
+import { CarPlaceholder, getPlaceholderTone } from '@/components/ui/car-placeholder'
 import { fmtPrice, fmtKm } from '@/lib/format'
 import { buildWhatsAppLink } from '@/lib/whatsapp'
 import type { VehicleStatus } from '@/lib/supabase/database.types'
@@ -33,6 +35,19 @@ type VehicleRow = {
   status: VehicleStatus
   slug: string
   featured: boolean
+  coverUrl: string | null
+}
+
+type VehicleRawRow = {
+  id: string
+  title: string
+  price: number | null
+  mileage: number | null
+  year: number | null
+  status: VehicleStatus
+  slug: string
+  featured: boolean
+  vehicle_photos: { url: string; is_cover: boolean }[] | null
 }
 
 export async function generateMetadata({
@@ -78,12 +93,19 @@ export default async function VendedorPage({
 
   const { data: vehiclesData } = await supabase
     .from('vehicles')
-    .select('id, title, price, mileage, year, status, slug, featured')
+    .select('id, title, price, mileage, year, status, slug, featured, vehicle_photos(url, is_cover)')
     .eq('seller_id', seller.id)
     .order('featured', { ascending: false })
     .order('created_at', { ascending: false })
 
-  const allVehicles = (vehiclesData ?? []) as unknown as VehicleRow[]
+  const allVehicles = ((vehiclesData ?? []) as unknown as VehicleRawRow[]).map((v) => {
+    const photos = v.vehicle_photos ?? []
+    const cover = photos.find((p) => p.is_cover) ?? photos[0]
+    return {
+      id: v.id, title: v.title, price: v.price, mileage: v.mileage, year: v.year,
+      status: v.status, slug: v.slug, featured: v.featured, coverUrl: cover?.url ?? null,
+    }
+  }) as VehicleRow[]
 
   // Filter by tab
   const filtered =
@@ -322,14 +344,26 @@ export default async function VendedorPage({
 /* ── Sub-components ──────────────────────────────────────────── */
 
 function SellerVehicleCard({ car }: { car: VehicleRow }) {
+  const tone = getPlaceholderTone(car.id)
   return (
     <Link
       href={`/autos/${car.slug}`}
       className="block rounded-card overflow-hidden border-hairline border-[var(--gray-line)] bg-white hover:border-[var(--gray-line-strong)] transition-colors"
       style={{ opacity: car.status === 'sold' ? 0.6 : 1 }}
     >
-      <div className="relative h-[160px] bg-surface-alt">
-        <StatusPill status={car.status} className="absolute top-2 left-2" />
+      <div className="relative h-[160px]" style={{ background: '#0E1218' }}>
+        {car.coverUrl ? (
+          <Image
+            src={car.coverUrl}
+            alt={car.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 50vw, 260px"
+          />
+        ) : (
+          <CarPlaceholder tone={tone} className="absolute inset-0" />
+        )}
+        <StatusPill status={car.status} className="absolute top-2 left-2 z-[1]" />
       </div>
       <div className="p-3 flex flex-col gap-1">
         <p className="text-[14px] font-[500] leading-snug">{car.title}</p>
