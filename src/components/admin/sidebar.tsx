@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Car, Users, LogOut, LayoutDashboard, FileText } from 'lucide-react'
+import { Car, Users, LogOut, LayoutDashboard, FileText, KeyRound } from 'lucide-react'
 import { Logo } from '@/components/ui/logo'
 import { signOut } from '@/app/admin/actions'
 
@@ -10,6 +10,7 @@ const NAV = [
   { href: '/admin/dashboard',   label: 'Dashboard',   icon: LayoutDashboard },
   { href: '/admin/inventario',  label: 'Inventario',  icon: Car },
   { href: '/admin/vendedores',  label: 'Vendedores',  icon: Users },
+  { href: '/admin/cuentas',     label: 'Cuentas',      icon: KeyRound },
   { href: '/admin/formulario',  label: 'Formulario',  icon: FileText },
 ]
 

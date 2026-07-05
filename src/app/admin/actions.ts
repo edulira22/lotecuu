@@ -37,6 +37,7 @@ export async function createSellerAccount(
   }
 
   revalidatePath('/admin/vendedores')
+  revalidatePath('/admin/cuentas')
   return { success: true }
 }
 
@@ -46,6 +47,7 @@ export async function deleteSellerAccount(userId: string, sellerId: string) {
   const { error } = await adminClient.auth.admin.deleteUser(userId)
   if (error) return { error: error.message }
   revalidatePath('/admin/vendedores')
+  revalidatePath('/admin/cuentas')
   return { success: true }
 }
 
