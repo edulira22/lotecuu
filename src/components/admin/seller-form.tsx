@@ -17,6 +17,7 @@ const schema = z.object({
   whatsapp: z.string().regex(/^\d{10}$/, 'Debe ser exactamente 10 dígitos (ej. 6141234567)'),
   business_name: z.string().optional(),
   phone: z.string().regex(/^\d{10}$/, 'Debe ser exactamente 10 dígitos').optional().or(z.literal('')),
+  email: z.string().email('Correo inválido').optional().or(z.literal('')),
   description: z.string().optional(),
   address: z.string().optional(),
   google_maps_url: z.string().url('URL inválida').optional().or(z.literal('')),
@@ -51,6 +52,7 @@ export function SellerForm({ seller, backHref }: SellerFormProps) {
       whatsapp: seller?.whatsapp ?? '',
       business_name: seller?.business_name ?? '',
       phone: seller?.phone ?? '',
+      email: seller?.email ?? '',
       description: seller?.description ?? '',
       address: seller?.address ?? '',
       google_maps_url: seller?.google_maps_url ?? '',
@@ -77,6 +79,7 @@ export function SellerForm({ seller, backHref }: SellerFormProps) {
       whatsapp: data.whatsapp,
       business_name: data.business_name || null,
       phone: data.phone || null,
+      email: data.email || null,
       description: data.description || null,
       address: data.address || null,
       google_maps_url: data.google_maps_url || null,
@@ -155,6 +158,16 @@ export function SellerForm({ seller, backHref }: SellerFormProps) {
           />
         </AdminField>
       </div>
+
+      <AdminField label="Correo de contacto" error={errors.email?.message}>
+        <input
+          {...register('email')}
+          type="email"
+          className={inputClass}
+          style={inputStyle}
+          placeholder="contacto@ejemplo.com"
+        />
+      </AdminField>
 
       <AdminField label="Descripción" error={errors.description?.message}>
         <textarea

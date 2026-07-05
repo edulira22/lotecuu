@@ -1,3 +1,5 @@
+import { PrintButton } from '@/components/admin/print-button'
+
 export const metadata = { title: 'Formulario de captura — LoteCUU' }
 
 export default function FormularioPage() {
@@ -6,12 +8,7 @@ export default function FormularioPage() {
       {/* Print button — hidden on print */}
       <div className="no-print flex items-center justify-between px-8 py-4 bg-white border-b" style={{ borderColor: 'var(--gray-line)' }}>
         <span className="text-[14px] font-[500]">Formulario de captura de vehículo</span>
-        <button
-          onClick={() => { if (typeof window !== 'undefined') window.print() }}
-          className="h-9 px-5 bg-orange text-white rounded-pill text-[13px] font-[500] hover:bg-orange-deep transition-colors"
-        >
-          Imprimir / Guardar PDF
-        </button>
+        <PrintButton />
       </div>
 
       {/* Printable form */}

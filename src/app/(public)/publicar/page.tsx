@@ -1,4 +1,4 @@
-﻿import Link from 'next/link'
+import Link from 'next/link'
 import { Navbar } from '@/components/ui/navbar'
 
 export const metadata = {
@@ -8,26 +8,26 @@ export const metadata = {
 const STEPS = [
   {
     n: '01',
-    title: 'Regístrate como vendedor',
-    body: 'Crea tu perfil de lote con datos de contacto, logo y descripción.',
+    title: 'Contáctanos',
+    body: 'Escríbenos o llámanos para acordar el alta de tu lote o de tus vehículos.',
   },
   {
     n: '02',
-    title: 'Sube tus autos',
-    body: 'Fotos, precio, km, año y todos los detalles desde tu panel de administración.',
+    title: 'Armamos tu perfil',
+    body: 'Nosotros damos de alta tu perfil y tu inventario — o si lo prefieres, te damos acceso para administrarlo tú mismo.',
   },
   {
     n: '03',
-    title: 'Recibe contactos directos',
-    body: 'Los compradores te contactan directamente — por WhatsApp o llamada — sin formularios ni intermediarios.',
+    title: 'Los compradores te contactan',
+    body: 'Tu teléfono, WhatsApp y correo aparecen en cada uno de tus autos. El trato es directo entre tú y el comprador.',
   },
 ]
 
 const BENEFITS = [
-  { icon: '⚡', title: 'Rápido', body: 'Publica en minutos desde cualquier dispositivo.' },
-  { icon: '🔗', title: 'Directo', body: 'Contacto directo al comprador — WhatsApp o llamada, sin filtros.' },
-  { icon: '📍', title: 'Local', body: 'Plataforma 100% enfocada en Chihuahua.' },
-  { icon: '✓', title: 'Verificado', body: 'Tu perfil muestra el badge de vendedor verificado.' },
+  { icon: '🚗', title: 'Tu inventario en línea', body: 'Tus autos con fotos y ficha completa, visibles para compradores locales.' },
+  { icon: '🔗', title: 'Contacto directo', body: 'Los compradores te contactan a ti. Nosotros no intervenimos en la venta.' },
+  { icon: '📍', title: 'Local', body: 'Plataforma enfocada en Chihuahua.' },
+  { icon: '✓', title: 'Vendedores verificados', body: 'Cada vendedor es dado de alta personalmente por nuestro equipo.' },
 ]
 
 export default function PublicarPage() {
@@ -54,18 +54,18 @@ export default function PublicarPage() {
             Para vendedores
           </p>
           <h1 className="text-[36px] md:text-[54px] font-[500] leading-[1.05] tracking-[-0.02em] m-0 mb-5">
-            Llega a compradores en{' '}
+            Muestra tus autos a compradores en{' '}
             <span className="text-orange">Chihuahua</span>
           </h1>
           <p className="text-[16px] md:text-[18px] text-white/80 m-0 mb-8 max-w-[520px] leading-relaxed">
-            LoteCUU conecta tu inventario con compradores locales. Contacto directo, sin comisiones, sin formularios.
+            LoteCUU muestra tu inventario a compradores locales. Contáctanos y te ayudamos a publicar.
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
-              href="/login"
+              href="/acerca#contacto"
               className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-[15px] font-[500] bg-orange text-white hover:bg-orange-deep transition-colors"
             >
-              Publicar mi inventario
+              Contáctanos
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
@@ -74,7 +74,7 @@ export default function PublicarPage() {
               href="/autos"
               className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-[15px] font-[500] border border-white/20 text-white hover:bg-white/10 transition-colors"
             >
-              Ver el feed
+              Ver el catálogo
             </Link>
           </div>
         </div>
@@ -126,16 +126,16 @@ export default function PublicarPage() {
         style={{ background: '#012538', color: '#fff' }}
       >
         <h2 className="text-[28px] md:text-[36px] font-[500] tracking-[-0.02em] m-0 mb-4">
-          ¿Listo para publicar?
+          ¿Quieres publicar tus autos?
         </h2>
         <p className="text-[15px] text-white/70 m-0 mb-7">
-          Crea tu cuenta de vendedor y empieza hoy.
+          Escríbenos y acordamos el alta de tu inventario.
         </p>
         <Link
-          href="/login"
+          href="/acerca#contacto"
           className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-[15px] font-[500] bg-orange text-white hover:bg-orange-deep transition-colors"
         >
-          Crear cuenta de vendedor
+          Ver datos de contacto
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>

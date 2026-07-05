@@ -20,6 +20,7 @@ export type Database = {
           slug: string
           whatsapp: string
           phone: string | null
+          email: string | null
           logo_url: string | null
           profile_photo_url: string | null
           description: string | null
@@ -41,6 +42,7 @@ export type Database = {
           slug: string
           whatsapp: string
           phone?: string | null
+          email?: string | null
           logo_url?: string | null
           profile_photo_url?: string | null
           description?: string | null
@@ -62,6 +64,7 @@ export type Database = {
           slug?: string
           whatsapp?: string
           phone?: string | null
+          email?: string | null
           logo_url?: string | null
           profile_photo_url?: string | null
           description?: string | null

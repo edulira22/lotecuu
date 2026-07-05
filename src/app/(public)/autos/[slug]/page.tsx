@@ -22,6 +22,7 @@ type SellerRow = {
   business_name: string | null
   whatsapp: string
   phone: string | null
+  email: string | null
   address: string | null
   google_maps_url: string | null
   slug: string
@@ -208,8 +209,8 @@ function SellerCard({
         </div>
       </div>
 
-      {/* Contact numbers — discreet */}
-      {(seller.whatsapp || seller.phone) && (
+      {/* Contact info — discreet */}
+      {(seller.whatsapp || seller.phone || seller.email) && (
         <div
           className="flex flex-col gap-1 pt-2.5"
           style={{ borderTop: '0.5px solid var(--gray-line)' }}
@@ -227,6 +228,18 @@ function SellerCard({
               </svg>
               {fmtPhone(seller.phone)}
             </span>
+          )}
+          {seller.email && (
+            <a
+              href={`mailto:${seller.email}`}
+              className="text-[11px] text-text-muted flex items-center gap-1.5 hover:text-teal transition-colors"
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+              {seller.email}
+            </a>
           )}
         </div>
       )}
