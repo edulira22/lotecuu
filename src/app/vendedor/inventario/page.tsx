@@ -27,9 +27,25 @@ export default async function VendorInventarioPage() {
   const all = vehicles ?? []
   const activeCount = all.filter((v) => ['published', 'reserved', 'hidden', 'draft'].includes(v.status)).length
   const atLimit = activeCount >= seller.max_vehicles
+  const profileIncomplete = !seller.whatsapp
 
   return (
     <div className="p-8 max-w-5xl">
+      {profileIncomplete && (
+        <div
+          className="mb-6 px-4 py-3.5 rounded-xl text-[13px] flex items-center justify-between gap-3 flex-wrap"
+          style={{ background: '#fff8f0', border: '0.5px solid #fde4c4', color: '#92400e' }}
+        >
+          <span>Completa tu perfil (nombre y WhatsApp) antes de publicar un auto — es lo que verán los compradores.</span>
+          <Link
+            href="/vendedor/perfil"
+            className="shrink-0 inline-flex items-center h-8 px-4 rounded-pill text-[12px] font-[500] bg-orange text-white hover:bg-orange-deep transition-colors"
+          >
+            Completar perfil
+          </Link>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between mb-6 flex-wrap gap-4">
         <div>

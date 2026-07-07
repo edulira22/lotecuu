@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { slugify } from '@/lib/format'
 
 export async function signOut() {
   const supabase = await createClient()
@@ -38,6 +39,45 @@ export async function createSellerAccount(
 
   revalidatePath('/admin/vendedores')
   revalidatePath('/admin/cuentas')
+  return { success: true }
+}
+
+/**
+ * Creates a login + a blank seller profile in one step. The seller fills in
+ * their own name, WhatsApp, etc. later from /vendedor/perfil. Starts inactive
+ * so an incomplete profile never shows up publicly.
+ */
+export async function createStandaloneSellerAccount(email: string, password: string) {
+  const adminClient = createAdminClient()
+
+  const { data, error } = await adminClient.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { role: 'seller' },
+  })
+  if (error) return { error: error.message }
+
+  const namePlaceholder = email.split('@')[0]
+  const slugBase = slugify(namePlaceholder) || 'vendedor'
+  const slug = `${slugBase}-${data.user.id.slice(0, 6)}`
+
+  const { error: insertErr } = await adminClient.from('sellers').insert({
+    name: namePlaceholder,
+    slug,
+    whatsapp: '',
+    active: false,
+    auth_user_id: data.user.id,
+  })
+
+  if (insertErr) {
+    await adminClient.auth.admin.deleteUser(data.user.id)
+    return { error: insertErr.message }
+  }
+
+  revalidatePath('/admin/vendedores')
+  revalidatePath('/admin/cuentas')
+  revalidatePath('/admin/dashboard')
   return { success: true }
 }
 
