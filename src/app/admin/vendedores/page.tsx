@@ -1,16 +1,19 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Plus, Pencil } from 'lucide-react'
+import { PlanEditor } from '@/components/admin/plan-editor'
 import type { Seller } from '@/lib/supabase/database.types'
 
 export const metadata = { title: 'Vendedores' }
 
 export default async function VendedoresAdminPage() {
   const supabase = await createClient()
-  const { data: sellers } = await supabase
+  const { data: sellersData } = await supabase
     .from('sellers')
-    .select('*')
+    .select('*, vehicles(id, status)')
     .order('created_at', { ascending: false })
+
+  const sellers = (sellersData ?? []) as unknown as (Seller & { vehicles: { id: string; status: string }[] })[]
 
   return (
     <div className="p-8 max-w-5xl">
@@ -35,12 +38,13 @@ export default async function VendedoresAdminPage() {
         <div
           className="grid text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500] px-5 py-3"
           style={{
-            gridTemplateColumns: '1fr 160px 120px 80px',
+            gridTemplateColumns: '1fr 90px 140px 100px 170px',
             background: 'var(--color-surface-alt)',
             borderBottom: '0.5px solid var(--gray-line)',
           }}
         >
           <span>Nombre</span>
+          <span>Autos</span>
           <span>WhatsApp</span>
           <span>Estado</span>
           <span />
@@ -52,12 +56,18 @@ export default async function VendedoresAdminPage() {
           </div>
         )}
 
-        {sellers?.map((seller: Seller, i: number) => (
+        {sellers?.map((seller, i: number) => {
+          const activeCount = seller.vehicles?.filter((v) =>
+            ['published', 'reserved', 'hidden', 'draft'].includes(v.status),
+          ).length ?? 0
+          const atLimit = activeCount >= seller.max_vehicles
+
+          return (
           <div
             key={seller.id}
             className="grid items-center px-5 py-4 gap-4"
             style={{
-              gridTemplateColumns: '1fr 160px 120px 80px',
+              gridTemplateColumns: '1fr 90px 140px 100px 170px',
               borderTop: i === 0 ? 'none' : '0.5px solid var(--gray-line)',
             }}
           >
@@ -68,7 +78,11 @@ export default async function VendedoresAdminPage() {
               )}
               <div className="text-[12px] text-text-muted font-mono mt-0.5">/{seller.slug}</div>
             </div>
-            <div className="text-[13px] text-text-muted">{seller.whatsapp}</div>
+            <div className="text-[13px]">
+              <span className={atLimit ? 'text-red-500 font-[500]' : 'text-text-base'}>{activeCount}</span>
+              <span className="text-text-muted"> / {seller.max_vehicles}</span>
+            </div>
+            <div className="text-[13px] text-text-muted">{seller.whatsapp || '—'}</div>
             <div>
               <span
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-[11px] font-[500]"
@@ -81,7 +95,8 @@ export default async function VendedoresAdminPage() {
                 {seller.active ? 'Activo' : 'Inactivo'}
               </span>
             </div>
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-1.5">
+              <PlanEditor seller={seller} />
               <Link
                 href={`/admin/vendedores/${seller.id}/editar`}
                 className="inline-flex items-center gap-1.5 h-8 px-3 rounded-pill text-[12px] font-[500] transition-colors"
@@ -92,7 +107,8 @@ export default async function VendedoresAdminPage() {
               </Link>
             </div>
           </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
