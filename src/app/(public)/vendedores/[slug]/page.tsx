@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Logo } from '@/components/ui/logo'
 import { StatusPill } from '@/components/ui/status-pill'
 import { InventoryTabs } from '@/components/seller/inventory-tabs'
+import { Stagger } from '@/components/ui/stagger'
 import { CarPlaceholder, getPlaceholderTone } from '@/components/ui/car-placeholder'
 import { fmtPrice, fmtKm } from '@/lib/format'
 import { buildWhatsAppLink } from '@/lib/whatsapp'
@@ -266,11 +267,11 @@ export default async function VendedorPage({
           </div>
 
           {filtered.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+            <Stagger key={tab} className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
               {filtered.map((car) => (
                 <SellerVehicleCard key={car.id} car={car} />
               ))}
-            </div>
+            </Stagger>
           ) : (
             <div className="py-12 text-center text-text-muted text-[14px] bg-surface-alt rounded-xl">
               Sin vehículos en este filtro.

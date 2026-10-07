@@ -13,6 +13,7 @@
     "@hookform/resolvers": "^3.10.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.105.1",
+    "animejs": "^4.5.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.511.0",

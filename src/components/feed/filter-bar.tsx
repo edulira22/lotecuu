@@ -1,7 +1,8 @@
 'use client'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import { animate, stagger } from 'animejs'
 
 /* ── Option sets ─────────────────────────────────────────────── */
 const TIPO_OPTIONS = [
@@ -87,6 +88,30 @@ function FilterDropdown({ label, options, value, onChange }: DropdownProps) {
       window.removeEventListener('scroll', onScroll)
     }
   }, [open, close])
+
+  // Dropdown unfolds + options cascade in (layout effect → no flash of the final state)
+  useLayoutEffect(() => {
+    if (!open || !panelRef.current) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const panelAnim = animate(panelRef.current, {
+      opacity: [0, 1],
+      translateY: [-8, 0],
+      scale: [0.97, 1],
+      duration: 220,
+      ease: 'outCubic',
+    })
+    const optionsAnim = animate(panelRef.current.children, {
+      opacity: [0, 1],
+      translateX: [-6, 0],
+      duration: 260,
+      delay: stagger(24, { start: 40 }),
+      ease: 'outCubic',
+    })
+    return () => {
+      panelAnim.revert()
+      optionsAnim.revert()
+    }
+  }, [open])
 
   const panel = open && mounted ? createPortal(
     <div

@@ -5,6 +5,7 @@ import { Hero } from '@/components/feed/hero'
 import { FilterBar } from '@/components/feed/filter-bar'
 import { CarCard } from '@/components/feed/car-card'
 import { Logo } from '@/components/ui/logo'
+import { Stagger } from '@/components/ui/stagger'
 import type { FeedVehicle } from '@/components/feed/car-card'
 import type { VehicleStatus } from '@/lib/supabase/database.types'
 
@@ -125,7 +126,10 @@ export default async function AutosPage({
             Sin resultados para este filtro.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Stagger
+            key={`${tipo}|${trans}|${precio}|${anio}|${dest}|${f}|${q}`}
+            className="grid grid-cols-1 md:grid-cols-3 gap-4"
+          >
             {filtered.map((v) => (
               <CarCard
                 key={v.id}
@@ -133,7 +137,7 @@ export default async function AutosPage({
                 wide={v.featured && filtered.indexOf(v) === 0}
               />
             ))}
-          </div>
+          </Stagger>
         )}
       </div>
 

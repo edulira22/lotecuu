@@ -1,10 +1,44 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { animate, stagger, svg } from 'animejs'
 
 export function Hero({ count }: { count: number }) {
   const [query, setQuery] = useState('')
   const router = useRouter()
+  const textRef = useRef<HTMLDivElement>(null)
+  const linesRef = useRef<SVGSVGElement>(null)
+
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    // Text blocks slide up in sequence (translate only — never hides the H1/LCP)
+    const blocks = textRef.current ? Array.from(textRef.current.children) : []
+    const intro = blocks.length
+      ? animate(blocks, {
+          translateY: [22, 0],
+          duration: 800,
+          delay: stagger(90),
+          ease: 'outExpo',
+        })
+      : null
+
+    // Road lines draw themselves
+    const paths = linesRef.current?.querySelectorAll('path')
+    const draw = paths?.length
+      ? animate(svg.createDrawable(paths), {
+          draw: ['0 0', '0 1'],
+          duration: 1600,
+          delay: stagger(160),
+          ease: 'inOutQuad',
+        })
+      : null
+
+    return () => {
+      intro?.revert()
+      draw?.revert()
+    }
+  }, [])
 
   const handleSearch = () => {
     if (!query.trim()) return
@@ -18,6 +52,7 @@ export function Hero({ count }: { count: number }) {
     >
       {/* Road-line decoration */}
       <svg
+        ref={linesRef}
         className="absolute top-0 right-0 w-[360px] h-full opacity-60 pointer-events-none hidden md:block"
         viewBox="0 0 360 280"
         preserveAspectRatio="none"
@@ -32,7 +67,7 @@ export function Hero({ count }: { count: number }) {
         </g>
       </svg>
 
-      <div className="max-w-[920px] relative">
+      <div ref={textRef} className="max-w-[920px] relative">
         <p className="text-[11px] font-[500] uppercase tracking-[0.12em] text-orange mb-3.5 md:mb-[18px]">
           Chihuahua · Autos usados
         </p>
