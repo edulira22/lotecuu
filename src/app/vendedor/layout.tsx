@@ -45,9 +45,10 @@ export default async function VendedorLayout({ children }: { children: React.Rea
   }
 
   return (
-    <div className="flex min-h-screen" style={{ background: '#F4F2EC' }}>
+    <div className="flex flex-col md:flex-row min-h-screen" style={{ background: '#F4F2EC' }}>
       <VendorSidebar seller={seller} />
-      <main className="flex-1 overflow-auto">{children}</main>
+      {/* pb leaves room for the phone tab bar */}
+      <main className="flex-1 min-w-0 pb-[calc(76px+env(safe-area-inset-bottom))] md:pb-0">{children}</main>
     </div>
   )
 }

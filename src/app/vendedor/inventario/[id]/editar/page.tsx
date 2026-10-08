@@ -36,13 +36,13 @@ export default async function VendorEditarPage({ params }: { params: Promise<{ i
   ])
 
   return (
-    <div className="p-8 flex flex-col gap-8 max-w-3xl">
+    <div className="p-4 md:p-8 flex flex-col gap-8 max-w-3xl">
       <div>
         <Link href="/vendedor/inventario" className="inline-flex items-center gap-1.5 text-[13px] text-text-muted hover:text-text-base mb-6 transition-colors">
           <ChevronLeft size={14} />
           Mis autos
         </Link>
-        <h1 className="text-[28px] font-[600] tracking-tight m-0">Editar: {vehicle.title}</h1>
+        <h1 className="text-[22px] md:text-[28px] font-[600] tracking-tight m-0">Editar: {vehicle.title}</h1>
       </div>
       <VehicleForm
         sellers={[seller]}

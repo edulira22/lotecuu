@@ -6,7 +6,7 @@ export const metadata = { title: 'Nuevo vendedor' }
 
 export default function NuevoVendedorPage() {
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <Link
         href="/admin/vendedores"
         className="inline-flex items-center gap-1.5 text-[13px] text-text-muted hover:text-text-base mb-6 transition-colors"
@@ -14,7 +14,7 @@ export default function NuevoVendedorPage() {
         <ChevronLeft size={14} />
         Vendedores
       </Link>
-      <h1 className="text-[28px] font-[600] tracking-tight mb-8">Nuevo vendedor</h1>
+      <h1 className="text-[22px] md:text-[28px] font-[600] tracking-tight mb-8">Nuevo vendedor</h1>
       <SellerForm />
     </div>
   )

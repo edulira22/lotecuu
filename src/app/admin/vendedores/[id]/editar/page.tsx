@@ -22,7 +22,7 @@ export default async function EditarVendedorPage({
   if (!seller) notFound()
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <Link
           href="/admin/vendedores"
@@ -40,7 +40,7 @@ export default async function EditarVendedorPage({
           {seller.auth_user_id ? 'Tiene acceso' : 'Crear acceso'}
         </Link>
       </div>
-      <h1 className="text-[28px] font-[600] tracking-tight mb-8">
+      <h1 className="text-[22px] md:text-[28px] font-[600] tracking-tight mb-8">
         Editar: {seller.name}
       </h1>
       <SellerForm seller={seller} />

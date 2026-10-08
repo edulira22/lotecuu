@@ -124,7 +124,7 @@ export function SellerForm({ seller, backHref }: SellerFormProps) {
   return (
     <div className="flex flex-col max-w-2xl">
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <AdminField label="Nombre del lote *" error={errors.name?.message}>
           <input
             {...register('name')}
@@ -154,7 +154,7 @@ export function SellerForm({ seller, backHref }: SellerFormProps) {
         />
       </AdminField>
 
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <AdminField label="WhatsApp *" error={errors.whatsapp?.message}>
           <input
             {...register('whatsapp')}
@@ -173,7 +173,7 @@ export function SellerForm({ seller, backHref }: SellerFormProps) {
         </AdminField>
       </div>
 
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <AdminField label="WhatsApp alterno (opcional)" error={errors.whatsapp2?.message}>
           <input {...register('whatsapp2')} className={inputClass} style={inputStyle} placeholder="6141234567" />
         </AdminField>
@@ -255,7 +255,7 @@ export function SellerForm({ seller, backHref }: SellerFormProps) {
     {/* Foto de perfil — disponible una vez que el vendedor existe */}
     {savedSellerId && (
       <div
-        className="bg-white rounded-[6px] p-6 flex flex-col gap-5 mt-6"
+        className="bg-white rounded-[6px] p-4 sm:p-6 flex flex-col gap-5 mt-6"
         style={{ border: '0.5px solid var(--gray-line)' }}
       >
         <div className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">

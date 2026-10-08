@@ -15,15 +15,15 @@ export function AccountRow({ seller, isFirst }: { seller: Seller; isFirst: boole
   return (
     <>
       <div
-        className="grid items-center px-5 py-4 gap-4"
-        style={{ gridTemplateColumns: '1fr 140px 160px', borderTop: isFirst ? 'none' : '0.5px solid var(--gray-line)' }}
+        className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1.5 md:gap-4 items-center md:[grid-template-columns:var(--cols)] px-4 md:px-5 py-4"
+        style={{ ['--cols' as string]: '1fr 140px 160px', borderTop: isFirst ? 'none' : '0.5px solid var(--gray-line)' }}
       >
-        <div>
-          <div className="text-[14px] font-[500]">{seller.name}</div>
-          {seller.business_name && <div className="text-[12px] text-text-muted">{seller.business_name}</div>}
+        <div className="min-w-0">
+          <div className="text-[14px] font-[500] truncate">{seller.name}</div>
+          {seller.business_name && <div className="text-[12px] text-text-muted truncate">{seller.business_name}</div>}
         </div>
 
-        <div>
+        <div className="col-start-1 row-start-2 md:col-start-auto md:row-start-auto">
           {hasAccount ? (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-[11px] font-[500]" style={{ background: '#d0e8ee', color: 'var(--color-teal)' }}>
               <span className="w-1.5 h-1.5 rounded-full bg-current" />
@@ -36,7 +36,7 @@ export function AccountRow({ seller, isFirst }: { seller: Seller; isFirst: boole
           )}
         </div>
 
-        <div className="flex justify-end">
+        <div className="col-start-2 row-start-1 row-span-2 md:col-start-auto md:row-start-auto md:row-span-1 flex justify-end">
           <button
             onClick={() => setOpen(true)}
             className="inline-flex items-center h-8 px-3.5 rounded-pill text-[12px] font-[500] transition-colors"

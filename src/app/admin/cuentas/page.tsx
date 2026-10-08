@@ -16,9 +16,9 @@ export default async function CuentasPage() {
   const withAccount = sellers.filter((s) => s.auth_user_id).length
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-4 md:p-8 max-w-3xl">
       <div className="flex items-start justify-between gap-4 flex-wrap mb-2">
-        <h1 className="text-[28px] font-[600] tracking-tight">Cuentas de vendedor</h1>
+        <h1 className="text-[22px] md:text-[28px] font-[600] tracking-tight">Cuentas de vendedor</h1>
         <NewAccountButton />
       </div>
       <p className="text-[13px] text-text-muted mb-8">
@@ -30,8 +30,8 @@ export default async function CuentasPage() {
       {sellers.length > 0 && (
       <div className="bg-white rounded-[6px] overflow-hidden" style={{ border: '0.5px solid var(--gray-line)' }}>
         <div
-          className="grid text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500] px-5 py-3"
-          style={{ gridTemplateColumns: '1fr 140px 160px', background: 'var(--color-surface-alt)', borderBottom: '0.5px solid var(--gray-line)' }}
+          className="hidden md:grid [grid-template-columns:1fr_140px_160px] text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500] px-5 py-3"
+          style={{ background: 'var(--color-surface-alt)', borderBottom: '0.5px solid var(--gray-line)' }}
         >
           <span>Vendedor</span>
           <span>Acceso</span>

@@ -92,7 +92,7 @@ export default async function VendorInventarioPage({
   const cols = '1fr 104px 108px 108px 118px 56px 84px'
 
   return (
-    <div className="p-8 max-w-6xl">
+    <div className="p-4 md:p-8 max-w-6xl">
       {profileIncomplete && (
         <div
           className="mb-6 px-4 py-3.5 rounded-[6px] text-[13px] flex items-center justify-between gap-3 flex-wrap"
@@ -108,7 +108,7 @@ export default async function VendorInventarioPage({
       {/* Header */}
       <div className="flex items-start justify-between mb-6 flex-wrap gap-4">
         <div>
-          <h1 className="text-[28px] font-[600] tracking-tight m-0">Mis autos</h1>
+          <h1 className="text-[22px] md:text-[28px] font-[600] tracking-tight m-0">Mis autos</h1>
           <div className="flex items-center gap-x-5 gap-y-2 mt-2 flex-wrap text-[12px] text-text-muted">
             <span className="inline-flex items-center gap-2">
               <span className="w-28 h-1.5 rounded-full bg-gray-200 overflow-hidden">
@@ -138,7 +138,10 @@ export default async function VendorInventarioPage({
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 bg-white rounded-[6px] overflow-hidden mb-6" style={{ border: '0.5px solid var(--gray-line)' }}>
+      <div
+        className="grid grid-cols-2 lg:grid-cols-4 gap-px rounded-[6px] overflow-hidden mb-6"
+        style={{ border: '0.5px solid var(--gray-line)', background: 'var(--gray-line)' }}
+      >
         {[
           { label: 'En venta', value: String(forSale.length), sub: listValue ? `${fmtPrice(listValue)} publicados` : 'Sin autos publicados' },
           { label: 'Invertido en inventario', value: invested ? fmtPrice(invested) : '—', sub: toolsReady ? 'Compra + gastos de lo no vendido' : 'Registra costos en cada auto' },
@@ -147,8 +150,7 @@ export default async function VendorInventarioPage({
         ].map((s, i) => (
           <div
             key={s.label}
-            className="px-5 py-4 flex flex-col gap-1"
-            style={{ borderLeft: i % 2 ? '0.5px solid var(--gray-line)' : i ? '0.5px solid var(--gray-line)' : 'none', borderTop: i >= 2 ? '0.5px solid var(--gray-line)' : 'none' }}
+            className="bg-white px-4 md:px-5 py-4 flex flex-col gap-1 min-w-0"
           >
             <span className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">{s.label}</span>
             <span className="text-[22px] font-[600] tracking-tight tabular-nums" style={{ color: s.tone }}>{s.value}</span>
@@ -180,10 +182,10 @@ export default async function VendorInventarioPage({
         })}
       </div>
 
-      <div className="bg-white rounded-[6px] overflow-x-auto" style={{ border: '0.5px solid var(--gray-line)' }}>
-        <div className="min-w-[760px]">
+      <div className="bg-white rounded-[6px] overflow-hidden" style={{ border: '0.5px solid var(--gray-line)' }}>
+        <div>
           <div
-            className="grid text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500] px-5 py-3"
+            className="hidden md:grid text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500] px-5 py-3"
             style={{ gridTemplateColumns: cols, background: 'var(--color-surface-alt)', borderBottom: '0.5px solid var(--gray-line)' }}
           >
             <span>Vehículo</span><span>Estado</span><span>Precio</span><span>Inversión</span><span>Ganancia</span><span>Docs</span><span />
@@ -200,11 +202,51 @@ export default async function VendorInventarioPage({
             const ref = v.status === 'sold' ? salePrice(v) : v.price
             const profit = c !== null && ref ? ref - c : null
             const docs = docCount.get(v.id) ?? 0
+            const shownPrice = v.status === 'sold' && salePrice(v) ? salePrice(v) : v.price
             return (
+              <div key={v.id} style={{ borderTop: i === 0 ? 'none' : '0.5px solid var(--gray-line)', opacity: v.status === 'sold' ? 0.75 : 1 }}>
+              {/* Phone: tappable card */}
+              <Link href={`/vendedor/inventario/${v.id}/editar`} className="md:hidden flex flex-col gap-2.5 px-4 py-3.5 active:bg-surface-alt">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[15px] font-[500] truncate flex items-center gap-1.5">
+                      {v.featured && <Star size={12} className="text-orange shrink-0" fill="currentColor" />}
+                      {v.title}
+                    </div>
+                    <div className="text-[12px] text-text-muted mt-0.5">
+                      {[v.year, v.mileage ? fmtKm(v.mileage) : null].filter(Boolean).join(' · ')}
+                    </div>
+                  </div>
+                  <Pencil size={14} className="text-text-muted shrink-0 mt-1" />
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <StatusPill status={v.status} />
+                  {shownPrice ? <span className="text-[14px] font-[500] tabular-nums">{fmtPrice(shownPrice)}</span> : null}
+                </div>
+                {(c !== null || docs > 0) && (
+                  <div className="grid grid-cols-3 gap-2 text-[12px] rounded-[4px] px-3 py-2" style={{ background: 'var(--color-surface)' }}>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-[0.08em] text-text-muted">Inversión</div>
+                      <div className="tabular-nums">{c !== null ? fmtPrice(c) : '—'}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-[0.08em] text-text-muted">{v.status === 'sold' ? 'Ganancia' : 'Gan. estimada'}</div>
+                      <div className="tabular-nums font-[500]" style={{ color: profit === null ? undefined : profit >= 0 ? 'var(--color-teal)' : '#dc2626' }}>
+                        {profit !== null ? fmtPrice(profit) : '—'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-[0.08em] text-text-muted">Docs</div>
+                      <div className="tabular-nums inline-flex items-center gap-1"><FileText size={12} /> {docs}</div>
+                    </div>
+                  </div>
+                )}
+              </Link>
+
+              {/* Desktop: table row */}
               <div
-                key={v.id}
-                className="grid items-center px-5 py-4 gap-4"
-                style={{ gridTemplateColumns: cols, borderTop: i === 0 ? 'none' : '0.5px solid var(--gray-line)', opacity: v.status === 'sold' ? 0.75 : 1 }}
+                className="hidden md:grid items-center px-5 py-4 gap-4"
+                style={{ gridTemplateColumns: cols }}
               >
                 <div className="min-w-0">
                   <div className="text-[14px] font-[500] truncate flex items-center gap-1.5">
@@ -237,6 +279,7 @@ export default async function VendorInventarioPage({
                     Abrir
                   </Link>
                 </div>
+              </div>
               </div>
             )
           })}

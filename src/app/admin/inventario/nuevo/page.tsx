@@ -14,7 +14,7 @@ export default async function NuevoVehiculoPage() {
     .order('name')
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <Link
         href="/admin/inventario"
         className="inline-flex items-center gap-1.5 text-[13px] text-text-muted hover:text-text-base mb-6 transition-colors"
@@ -22,7 +22,7 @@ export default async function NuevoVehiculoPage() {
         <ChevronLeft size={14} />
         Inventario
       </Link>
-      <h1 className="text-[28px] font-[600] tracking-tight mb-8">Publicar vehículo</h1>
+      <h1 className="text-[22px] md:text-[28px] font-[600] tracking-tight mb-8">Publicar vehículo</h1>
       <VehicleForm sellers={sellers ?? []} />
     </div>
   )

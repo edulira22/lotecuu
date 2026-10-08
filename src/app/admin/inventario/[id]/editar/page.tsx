@@ -29,7 +29,7 @@ export default async function EditarVehiculoPage({
   if (!vehicle) notFound()
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <Link
         href="/admin/inventario"
         className="inline-flex items-center gap-1.5 text-[13px] text-text-muted hover:text-text-base mb-6 transition-colors"
@@ -37,7 +37,7 @@ export default async function EditarVehiculoPage({
         <ChevronLeft size={14} />
         Inventario
       </Link>
-      <h1 className="text-[28px] font-[600] tracking-tight mb-8 truncate">
+      <h1 className="text-[22px] md:text-[28px] font-[600] tracking-tight mb-8 truncate">
         {vehicle.title}
       </h1>
       <VehicleForm

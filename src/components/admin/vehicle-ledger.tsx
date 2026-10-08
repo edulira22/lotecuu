@@ -109,7 +109,7 @@ export function VehicleLedger({
   }
 
   return (
-    <section className="bg-white rounded-[6px] p-6 flex flex-col gap-5" style={{ border: '0.5px solid var(--gray-line)' }}>
+    <section className="bg-white rounded-[6px] p-4 sm:p-6 flex flex-col gap-5" style={{ border: '0.5px solid var(--gray-line)' }}>
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h2 className="text-[16px] font-[600] m-0">Finanzas del auto</h2>
@@ -160,7 +160,7 @@ export function VehicleLedger({
           </div>
 
           {/* Summary */}
-          <div className="grid grid-cols-3 rounded-[4px] overflow-hidden" style={{ border: '0.5px solid var(--gray-line)' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-px rounded-[4px] overflow-hidden" style={{ border: '0.5px solid var(--gray-line)', background: 'var(--gray-line)' }}>
             {[
               { label: 'Inversión total', value: invest > 0 ? fmtPrice(invest) : '—' },
               { label: isSold || toNumber(sale) ? 'Precio de venta' : 'Precio publicado', value: reference ? fmtPrice(reference) : '—' },
@@ -170,7 +170,7 @@ export function VehicleLedger({
                 tone: profit === null ? undefined : profit >= 0 ? 'var(--color-teal)' : '#dc2626',
               },
             ].map((s, i) => (
-              <div key={s.label} className="px-4 py-3 flex flex-col gap-1" style={{ borderLeft: i ? '0.5px solid var(--gray-line)' : 'none', background: 'var(--color-surface)' }}>
+              <div key={s.label} className="px-4 py-3 flex flex-col gap-1" style={{ background: 'var(--color-surface)' }}>
                 <span className="text-[10.5px] text-text-muted uppercase tracking-[0.08em] font-[500]">{s.label}</span>
                 <span className="text-[16px] font-[500] tabular-nums" style={{ color: s.tone }}>{s.value}</span>
               </div>

@@ -187,10 +187,10 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
     <div className="flex flex-col gap-8 max-w-3xl">
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
         {/* Vendedor + estado */}
-        <div className="bg-white rounded-[6px] p-6 flex flex-col gap-5" style={{ border: '0.5px solid var(--gray-line)' }}>
+        <div className="bg-white rounded-[6px] p-4 sm:p-6 flex flex-col gap-5" style={{ border: '0.5px solid var(--gray-line)' }}>
           <div className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">Publicación</div>
 
-          <div className="grid grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {!lockedSellerId && (
             <AdminField label="Vendedor *" error={errors.seller_id?.message}>
               <select {...register('seller_id')} className={selectClass} style={inputStyle}>
@@ -262,7 +262,7 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
         </div>
 
         {/* Datos del auto */}
-        <div className="bg-white rounded-[6px] p-6 flex flex-col gap-5" style={{ border: '0.5px solid var(--gray-line)' }}>
+        <div className="bg-white rounded-[6px] p-4 sm:p-6 flex flex-col gap-5" style={{ border: '0.5px solid var(--gray-line)' }}>
           <div className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">Datos del vehículo</div>
 
           <AdminField label="Título *" error={errors.title?.message}>
@@ -279,7 +279,7 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
             <input {...register('slug')} className={inputClass} style={inputStyle} placeholder="toyota-hilux-2022-4x4-trd" />
           </AdminField>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <AdminField label="Marca" error={errors.brand?.message}>
               <input {...register('brand')} className={inputClass} style={inputStyle} placeholder="Toyota" />
             </AdminField>
@@ -291,7 +291,7 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
             </AdminField>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <AdminField label="Año" error={errors.year?.message}>
               <select {...register('year')} className={selectClass} style={inputStyle}>
                 <option value="">—</option>
@@ -320,7 +320,7 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
             </AdminField>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <AdminField label="Transmisión">
               <select {...register('transmission')} className={selectClass} style={inputStyle}>
                 <option value="">—</option>
@@ -340,7 +340,7 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
             </AdminField>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <AdminField label="Carrocería">
               <select {...register('body_type')} className={selectClass} style={inputStyle}>
                 <option value="">—</option>
@@ -367,7 +367,7 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
             </AdminField>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <AdminField label="Puertas">
               <select {...register('doors')} className={selectClass} style={inputStyle}>
                 <option value="">—</option>
@@ -391,7 +391,7 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
             </AdminField>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <AdminField label="Tracción">
               <select {...register('drive_type')} className={selectClass} style={inputStyle}>
                 <option value="">—</option>
@@ -452,7 +452,7 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
 
       {/* Fotos — solo disponibles una vez que el vehículo existe */}
       {savedVehicleId && (
-        <div className="bg-white rounded-[6px] p-6" style={{ border: '0.5px solid var(--gray-line)' }}>
+        <div className="bg-white rounded-[6px] p-4 sm:p-6" style={{ border: '0.5px solid var(--gray-line)' }}>
           <div className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500] mb-4">Fotos</div>
           <PhotoUploader vehicleId={savedVehicleId} initialPhotos={photos} />
           {!isEdit && (

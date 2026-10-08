@@ -15,8 +15,8 @@ export default async function VendorPerfilPage() {
   if (!sellerData) redirect('/login')
 
   return (
-    <div className="p-8">
-      <h1 className="text-[28px] font-[600] tracking-tight mb-2">Mi perfil</h1>
+    <div className="p-4 md:p-8">
+      <h1 className="text-[22px] md:text-[28px] font-[600] tracking-tight mb-2">Mi perfil</h1>
       <p className="text-[13px] text-text-muted mb-8">
         Información visible en tu página pública de vendedor.
       </p>

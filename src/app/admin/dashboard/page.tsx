@@ -6,6 +6,8 @@ import type { Seller } from '@/lib/supabase/database.types'
 
 export const metadata = { title: 'Dashboard — LoteCUU Admin' }
 
+const COLS = '1.5fr 80px 80px 80px 140px 1fr 80px'
+
 const STATUS_STYLE: Record<string, { bg: string; fg: string; label: string }> = {
   al_corriente: { bg: '#d1fae5', fg: '#065f46', label: 'Al corriente' },
   atrasado:     { bg: '#fef3c7', fg: '#92400e', label: 'Atrasado' },
@@ -29,8 +31,8 @@ export default async function DashboardPage() {
   const suspendido = sellers.filter((s) => s.payment_status === 'suspendido').length
 
   return (
-    <div className="p-8 max-w-6xl">
-      <h1 className="text-[28px] font-[600] tracking-tight mb-6">Dashboard</h1>
+    <div className="p-4 md:p-8 max-w-6xl">
+      <h1 className="text-[22px] md:text-[28px] font-[600] tracking-tight mb-6">Dashboard</h1>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -50,8 +52,8 @@ export default async function DashboardPage() {
       {/* Sellers table */}
       <div className="bg-white rounded-[6px] overflow-hidden" style={{ border: '0.5px solid var(--gray-line)' }}>
         <div
-          className="grid text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500] px-5 py-3"
-          style={{ gridTemplateColumns: '1.5fr 80px 80px 80px 140px 1fr 80px', background: 'var(--color-surface-alt)', borderBottom: '0.5px solid var(--gray-line)' }}
+          className="hidden md:grid [grid-template-columns:var(--cols)] text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500] px-5 py-3"
+          style={{ ['--cols' as string]: COLS, background: 'var(--color-surface-alt)', borderBottom: '0.5px solid var(--gray-line)' }}
         >
           <span>Vendedor</span>
           <span>Plan</span>
@@ -75,10 +77,10 @@ export default async function DashboardPage() {
           return (
             <div
               key={seller.id}
-              className="grid items-center px-5 py-4 gap-3"
-              style={{ gridTemplateColumns: '1.5fr 80px 80px 80px 140px 1fr 80px', borderTop: i === 0 ? 'none' : '0.5px solid var(--gray-line)' }}
+              className="grid grid-cols-3 gap-x-4 gap-y-3 md:gap-3 md:items-center md:[grid-template-columns:var(--cols)] px-4 md:px-5 py-4"
+              style={{ ['--cols' as string]: COLS, borderTop: i === 0 ? 'none' : '0.5px solid var(--gray-line)' }}
             >
-              <div>
+              <div className="col-span-3 md:col-span-1 min-w-0">
                 <div className="text-[14px] font-[500]">{seller.name}</div>
                 {seller.business_name && <div className="text-[12px] text-text-muted">{seller.business_name}</div>}
                 <div className="flex items-center gap-2 mt-1">
@@ -90,15 +92,16 @@ export default async function DashboardPage() {
                 </div>
               </div>
 
-              <div className="text-[13px] font-[500]">{PLAN_LABEL[seller.plan] ?? seller.plan}</div>
+              <div className="text-[13px] font-[500]"><span className="md:hidden block text-[10.5px] uppercase tracking-[0.08em] text-text-muted font-[400] mb-0.5">Plan</span>{PLAN_LABEL[seller.plan] ?? seller.plan}</div>
 
               <div className="text-[13px]">
+                <span className="md:hidden block text-[10.5px] uppercase tracking-[0.08em] text-text-muted font-[400] mb-0.5">Autos</span>
                 <span className={activeVehicles >= seller.max_vehicles ? 'text-red-500 font-[500]' : ''}>{activeVehicles}</span>
               </div>
 
-              <div className="text-[13px] text-text-muted">{seller.max_vehicles}</div>
+              <div className="text-[13px] text-text-muted"><span className="md:hidden block text-[10.5px] uppercase tracking-[0.08em] text-text-muted font-[400] mb-0.5">Límite</span>{seller.max_vehicles}</div>
 
-              <div>
+              <div className="col-span-3 md:col-span-1">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-[11px] font-[500]"
                   style={{ background: st.bg, color: st.fg }}>
                   <span className="w-1.5 h-1.5 rounded-full bg-current" />
@@ -106,9 +109,9 @@ export default async function DashboardPage() {
                 </span>
               </div>
 
-              <div className="text-[12px] text-text-muted truncate">{seller.payment_notes ?? '—'}</div>
+              <div className={`text-[12px] text-text-muted md:truncate col-span-3 md:col-span-1 ${seller.payment_notes ? '' : 'hidden md:block'}`}>{seller.payment_notes ?? '—'}</div>
 
-              <div className="flex gap-1 justify-end">
+              <div className="col-span-3 md:col-span-1 flex gap-1 md:justify-end">
                 <PlanEditor seller={seller} />
                 <Link
                   href={`/admin/vendedores/${seller.id}/editar`}

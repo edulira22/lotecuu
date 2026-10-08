@@ -88,7 +88,7 @@ export function VehicleDocuments({ vehicleId }: { vehicleId: string }) {
   }
 
   return (
-    <section className="bg-white rounded-[6px] p-6 flex flex-col gap-5" style={{ border: '0.5px solid var(--gray-line)' }}>
+    <section className="bg-white rounded-[6px] p-4 sm:p-6 flex flex-col gap-5" style={{ border: '0.5px solid var(--gray-line)' }}>
       <div>
         <h2 className="text-[16px] font-[600] m-0">Documentos</h2>
         <p className="text-[12px] text-text-muted m-0 mt-1 inline-flex items-center gap-1.5">
