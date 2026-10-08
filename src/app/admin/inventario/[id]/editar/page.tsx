@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, ImagePlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { VehicleForm } from '@/components/admin/vehicle-form'
 import { VehicleLedger } from '@/components/admin/vehicle-ledger'
@@ -37,9 +37,19 @@ export default async function EditarVehiculoPage({
         <ChevronLeft size={14} />
         Inventario
       </Link>
-      <h1 className="text-[22px] md:text-[28px] font-[600] tracking-tight mb-8 truncate">
-        {vehicle.title}
-      </h1>
+      <div className="flex items-start justify-between gap-3 flex-wrap mb-8 max-w-3xl">
+        <h1 className="text-[22px] md:text-[28px] font-[600] tracking-tight m-0 truncate min-w-0">
+          {vehicle.title}
+        </h1>
+        <Link
+          href={`/admin/inventario/${vehicle.id}/redes`}
+          className="inline-flex items-center gap-2 h-10 px-4 rounded-[4px] bg-white text-[13px] font-[500] hover:bg-surface-alt transition-colors shrink-0"
+          style={{ border: '0.5px solid var(--gray-line-strong)' }}
+        >
+          <ImagePlus size={15} />
+          Crear post para redes
+        </Link>
+      </div>
       <VehicleForm
         sellers={sellers ?? []}
         vehicle={vehicle}

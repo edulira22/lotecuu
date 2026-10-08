@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
-import { Plus, Pencil } from 'lucide-react'
+import { Plus, Pencil, ImagePlus } from 'lucide-react'
 import { fmtPrice } from '@/lib/format'
 import { StatusPill } from '@/components/ui/status-pill'
 import { CarPlaceholder, getPlaceholderTone } from '@/components/ui/car-placeholder'
@@ -51,7 +51,7 @@ export default async function InventarioPage() {
         <div
           className="hidden md:grid text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500] px-5 py-3"
           style={{
-            gridTemplateColumns: '64px 1.8fr 1fr 100px 130px 90px',
+            gridTemplateColumns: '64px 1.8fr 1fr 100px 130px 130px',
             gap: '14px',
             background: 'var(--color-surface-alt)',
             borderBottom: '0.5px solid var(--gray-line)',
@@ -104,7 +104,7 @@ export default async function InventarioPage() {
             {/* Desktop: table row */}
             <div
               className="hidden md:grid items-center px-5 py-3 gap-4"
-              style={{ gridTemplateColumns: '64px 1.8fr 1fr 100px 130px 90px' }}
+              style={{ gridTemplateColumns: '64px 1.8fr 1fr 100px 130px 130px' }}
             >
               {/* Thumbnail */}
               <div className="w-16 h-11 rounded-[4px] overflow-hidden bg-surface-alt shrink-0">
@@ -150,7 +150,16 @@ export default async function InventarioPage() {
               </div>
 
               {/* Edit */}
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-1.5">
+                <Link
+                  href={`/admin/inventario/${v.id}/redes`}
+                  title="Crear post para redes"
+                  aria-label="Crear post para redes"
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-pill transition-colors hover:bg-surface-alt"
+                  style={{ border: '0.5px solid var(--gray-line-strong)' }}
+                >
+                  <ImagePlus size={13} />
+                </Link>
                 <Link
                   href={`/admin/inventario/${v.id}/editar`}
                   className="inline-flex items-center gap-1.5 h-8 px-3 rounded-pill text-[12px] font-[500] transition-colors hover:bg-surface-alt"
