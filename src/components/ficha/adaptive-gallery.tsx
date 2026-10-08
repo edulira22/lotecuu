@@ -75,7 +75,8 @@ export function AdaptiveGallery({ photos, vehicleId, vehicleTitle }: AdaptiveGal
   const [vh, setVh] = useState(800)
   const [ratios, setRatios] = useState<number[]>(() => photos.map(() => DEFAULT_RATIO))
   const [index, setIndex] = useState(0)
-  const [lightbox, setLightbox] = useState<DOMRect | null>(null)
+  const [lightbox, setLightbox] = useState<{ index: number; origin: DOMRect } | null>(null)
+  const instantHeight = useRef(false)
 
   const rootRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
@@ -180,9 +181,22 @@ export function AdaptiveGallery({ photos, vehicleId, vehicleTitle }: AdaptiveGal
     navAnim.current = animate(proxy, { x: target, ease: NAV_SPRING, onUpdate: () => d.setX(proxy.x) })
   }, [])
 
+  /** Instant (no animation) — used to quietly line the strip up behind the fullscreen view */
+  const jumpTo = useCallback((i: number) => {
+    const d = dragRef.current
+    const target = geoRef.current.snaps[i]
+    if (!d || target === undefined || i === indexRef.current) return
+    navAnim.current?.cancel()
+    instantHeight.current = true
+    d.setX(target)
+  }, [])
+
   const openLightbox = useCallback((i: number) => {
     const card = cardRefs.current[i]
-    setLightbox(card?.getBoundingClientRect() ?? new DOMRect(window.innerWidth / 2, window.innerHeight / 2, 1, 1))
+    setLightbox({
+      index: i,
+      origin: card?.getBoundingClientRect() ?? new DOMRect(window.innerWidth / 2, window.innerHeight / 2, 1, 1),
+    })
   }, [])
 
   /* ── Physical drag (anime.js Draggable) ──────────────── */
@@ -247,8 +261,10 @@ export function AdaptiveGallery({ photos, vehicleId, vehicleTitle }: AdaptiveGal
     const h = Math.round(s.h)
     // Until the real proportions of the active photo are known, snap instead of animating
     // (otherwise every page load would show the frame shrinking from a guessed size)
-    if (!heightReady.current || reducedMotion()) {
+    if (!heightReady.current || instantHeight.current || reducedMotion()) {
+      heightAnim.current?.cancel()
       st.style.height = `${h}px`
+      instantHeight.current = false
       if (measured.current.has(index)) heightReady.current = true
       paint(dragRef.current?.x ?? geo.snaps[index] ?? 0)
       return
@@ -554,11 +570,11 @@ export function AdaptiveGallery({ photos, vehicleId, vehicleTitle }: AdaptiveGal
         <Lightbox
           photos={photos}
           ratios={ratios}
-          index={index}
-          origin={lightbox}
+          startIndex={lightbox.index}
+          origin={lightbox.origin}
           title={vehicleTitle}
-          onGo={(i) => goTo(i)}
-          getReturnRect={() => cardRefs.current[indexRef.current]?.getBoundingClientRect() ?? null}
+          onSync={jumpTo}
+          getReturnRect={(i) => cardRefs.current[i]?.getBoundingClientRect() ?? null}
           onClosed={() => setLightbox(null)}
         />
       )}
@@ -594,54 +610,77 @@ function fitRect(ratio: number) {
   return { left: (window.innerWidth - w) / 2, top: (window.innerHeight - h) / 2 - (mobile ? 20 : 16), width: w, height: h }
 }
 
+const BACK_SPRING = createSpring({ mass: 1, stiffness: 220, damping: 22 })
+const SWIPE_DISTANCE = 80
+const DISMISS_DISTANCE = 120
+
+/**
+ * Fullscreen viewer. Gestures lock to one axis as soon as the finger moves:
+ * sideways changes photo (with resistance at the ends), down/up dismisses.
+ * The page behind stays hidden (solid backdrop) and the gallery under it is
+ * only re-aligned once, silently, when closing.
+ */
 function Lightbox({
-  photos, ratios, index, origin, title, onGo, getReturnRect, onClosed,
+  photos, ratios, startIndex, origin, title, onSync, getReturnRect, onClosed,
 }: {
   photos: GalleryPhoto[]
   ratios: number[]
-  index: number
+  startIndex: number
   origin: DOMRect
   title: string
-  onGo: (i: number) => void
-  getReturnRect: () => DOMRect | null
+  onSync: (i: number) => void
+  getReturnRect: (i: number) => DOMRect | null
   onClosed: () => void
 }) {
+  const total = photos.length
+  const [idx, setIdx] = useState(startIndex)
+  const idxRef = useRef(startIndex)
+  idxRef.current = idx
+  const navDir = useRef<1 | -1>(1)
   const backdropRef = useRef<HTMLDivElement>(null)
   const frameRef = useRef<HTMLDivElement>(null)
-  const dragTargetRef = useRef<HTMLDivElement>(null)
+  const panRef = useRef<HTMLDivElement>(null)
   const imgRef = useRef<HTMLDivElement>(null)
   const chromeRef = useRef<HTMLDivElement>(null)
   const closing = useRef(false)
-  const indexRef = useRef(index)
-  indexRef.current = index
-  // Latest callbacks without re-creating the drag/keyboard handlers on every render
-  const cb = useRef({ onGo, getReturnRect, onClosed })
-  cb.current = { onGo, getReturnRect, onClosed }
-  const total = photos.length
-  const label = angleLabel(photos[index]?.angle)
-  const [initialRect] = useState(() => fitRect(ratios[index] ?? DEFAULT_RATIO))
+  const backAnim = useRef<JSAnimation | null>(null)
+  const gesture = useRef<{ x: number; y: number; dx: number; dy: number; axis: 'x' | 'y' | null } | null>(null)
+  const cb = useRef({ onSync, getReturnRect, onClosed })
+  cb.current = { onSync, getReturnRect, onClosed }
+  const label = angleLabel(photos[idx]?.angle)
+  const [initialRect] = useState(() => fitRect(ratios[startIndex] ?? DEFAULT_RATIO))
 
-  /** Fly back into the slide. `offset` = where the finger left the photo, so the motion is continuous. */
-  const close = useCallback((offset?: { x: number; y: number }) => {
+  const go = useCallback((i: number) => {
+    if (i < 0 || i >= total || i === idxRef.current || closing.current) return
+    navDir.current = i > idxRef.current ? 1 : -1
+    setIdx(i)
+  }, [total])
+
+  /** Fly back into the gallery slide of the photo being viewed */
+  const close = useCallback(() => {
     if (closing.current) return
     closing.current = true
-    const frame = frameRef.current
-    const target = cb.current.getReturnRect()
-    if (!frame || !target || reducedMotion()) { cb.current.onClosed(); return }
-    if (offset && dragTargetRef.current) {
-      dragTargetRef.current.style.transform = 'none'
-      frame.style.left = `${frame.offsetLeft + offset.x}px`
-      frame.style.top = `${frame.offsetTop + offset.y}px`
-    }
-    if (backdropRef.current) animate(backdropRef.current, { opacity: 0, duration: 380, ease: 'out(3)' })
-    if (chromeRef.current) animate(chromeRef.current, { opacity: 0, duration: 200 })
-    animate(frame, {
-      left: target.left, top: target.top, width: target.width, height: target.height,
-      ease: createSpring({ stiffness: 140, damping: 20 }),
-      onComplete: () => cb.current.onClosed(),
-    })
+    const i = idxRef.current
+    cb.current.onSync(i)
+    // Let the strip settle under us before measuring where to land
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const frame = frameRef.current
+      const pan = panRef.current
+      const target = cb.current.getReturnRect(i)
+      if (!frame || !pan || !target || reducedMotion()) { cb.current.onClosed(); return }
+      // Fold the current drag offset/scale into the frame so the motion is continuous
+      const r = pan.getBoundingClientRect()
+      Object.assign(frame.style, { left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px` })
+      pan.style.transform = 'none'
+      if (backdropRef.current) animate(backdropRef.current, { opacity: 0, duration: 380, ease: 'out(3)' })
+      if (chromeRef.current) animate(chromeRef.current, { opacity: 0, duration: 180 })
+      animate(frame, {
+        left: target.left, top: target.top, width: target.width, height: target.height,
+        ease: createSpring({ stiffness: 150, damping: 20 }),
+        onComplete: () => cb.current.onClosed(),
+      })
+    }))
   }, [])
-  const goFromLightbox = useCallback((i: number) => cb.current.onGo(i), [])
 
   // Open: FLIP from the slide's rect to the fitted rect
   useLayoutEffect(() => {
@@ -650,7 +689,7 @@ function Lightbox({
     const overflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     if (!reducedMotion()) {
-      animate(backdropRef.current!, { opacity: [0, 1], duration: 420, ease: 'out(3)' })
+      if (backdropRef.current) animate(backdropRef.current, { opacity: [0, 1], duration: 380, ease: 'out(3)' })
       animate(frame, {
         left: [origin.left, initialRect.left],
         top: [origin.top, initialRect.top],
@@ -663,74 +702,109 @@ function Lightbox({
     return () => { document.body.style.overflow = overflow }
   }, [origin, initialRect])
 
-  // Photo change: the frame morphs to the new photo's proportions
+  // Photo change: the frame morphs to the new proportions, the photo slides in from its side
   const first = useRef(true)
   useEffect(() => {
     if (first.current) { first.current = false; return }
     const frame = frameRef.current
     if (!frame || closing.current) return
-    const r = fitRect(ratios[index] ?? DEFAULT_RATIO)
+    const r = fitRect(ratios[idx] ?? DEFAULT_RATIO)
     if (reducedMotion()) {
       Object.assign(frame.style, { left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px` })
       return
     }
     animate(frame, { ...r, ease: createSpring({ stiffness: 130, damping: 18 }) })
-    if (imgRef.current) animate(imgRef.current, { opacity: [0.2, 1], scale: [1.04, 1], duration: 600, ease: 'out(3)' })
-  }, [index, ratios])
+    if (imgRef.current) {
+      animate(imgRef.current, { opacity: [0, 1], translateX: [navDir.current * 70, 0], duration: 520, ease: 'out(4)' })
+    }
+  }, [idx, ratios])
 
-  // Drag: down/up to close, sideways to change photo
-  useEffect(() => {
-    const target = dragTargetRef.current
-    if (!target) return
-    const drag = createDraggable(target, {
-      x: { snap: 0 },
-      y: { snap: 0 },
-      releaseStiffness: 160,
-      releaseDamping: 18,
-      cursor: { onHover: 'grab', onGrab: 'grabbing' },
-      onUpdate: (self) => {
-        const fade = Math.min(Math.abs(self.y) / 380, 0.7)
-        if (backdropRef.current && !closing.current) backdropRef.current.style.opacity = String(1 - fade)
-      },
-      onRelease: (self) => {
-        if (Math.abs(self.y) > 110 && Math.abs(self.y) > Math.abs(self.x)) {
-          const offset = { x: self.x, y: self.y }
-          self.stop()
-          self.disable()
-          close(offset)
-          return
-        }
-        if (self.x < -90 && indexRef.current < total - 1) goFromLightbox(indexRef.current + 1)
-        else if (self.x > 90 && indexRef.current > 0) goFromLightbox(indexRef.current - 1)
-      },
-    })
-    return () => { drag.revert() }
-  }, [close, goFromLightbox, total])
-
+  // Keyboard
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') close()
-      if (e.key === 'ArrowRight' && indexRef.current < total - 1) goFromLightbox(indexRef.current + 1)
-      if (e.key === 'ArrowLeft' && indexRef.current > 0) goFromLightbox(indexRef.current - 1)
+      if (e.key === 'ArrowRight') go(idxRef.current + 1)
+      if (e.key === 'ArrowLeft') go(idxRef.current - 1)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [close, goFromLightbox, total])
+  }, [close, go])
+
+  /* ── Axis-locked gestures ── */
+  function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (e.button !== 0 || closing.current) return
+    backAnim.current?.cancel()
+    gesture.current = { x: e.clientX, y: e.clientY, dx: 0, dy: 0, axis: null }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    const g = gesture.current
+    const pan = panRef.current
+    if (!g || !pan) return
+    g.dx = e.clientX - g.x
+    g.dy = e.clientY - g.y
+    if (!g.axis) {
+      if (Math.max(Math.abs(g.dx), Math.abs(g.dy)) < 8) return
+      g.axis = Math.abs(g.dx) > Math.abs(g.dy) ? 'x' : 'y'
+    }
+    if (g.axis === 'x') {
+      const atEdge = (g.dx > 0 && idxRef.current === 0) || (g.dx < 0 && idxRef.current === total - 1)
+      const tx = total < 2 ? g.dx * 0.15 : atEdge ? g.dx * 0.25 : g.dx
+      pan.style.transform = `translate3d(${tx}px,0,0)`
+    } else {
+      const scale = 1 - Math.min(Math.abs(g.dy) / 1600, 0.22)
+      pan.style.transform = `translate3d(0,${g.dy}px,0) scale(${scale})`
+      if (backdropRef.current) backdropRef.current.style.opacity = String(1 - Math.min(Math.abs(g.dy) / 420, 0.7))
+    }
+  }
+
+  function springBack() {
+    const pan = panRef.current
+    if (!pan) return
+    backAnim.current = animate(pan, { translateX: 0, translateY: 0, scale: 1, ease: BACK_SPRING })
+    if (backdropRef.current) animate(backdropRef.current, { opacity: 1, duration: 260, ease: 'out(2)' })
+  }
+
+  function onPointerUp() {
+    const g = gesture.current
+    gesture.current = null
+    if (!g || !g.axis) return
+    if (g.axis === 'y') {
+      if (Math.abs(g.dy) > DISMISS_DISTANCE) close()
+      else springBack()
+      return
+    }
+    const next = g.dx < 0 ? idxRef.current + 1 : idxRef.current - 1
+    if (Math.abs(g.dx) > SWIPE_DISTANCE && next >= 0 && next < total) {
+      if (panRef.current) panRef.current.style.transform = 'none'
+      go(next)
+    } else {
+      springBack()
+    }
+  }
 
   return createPortal(
     <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label={`Fotos de ${title}`}>
-      <div ref={backdropRef} className="absolute inset-0" style={{ background: 'rgba(4,10,16,0.96)' }} onClick={() => close()} />
+      <div ref={backdropRef} className="absolute inset-0" style={{ background: '#05090D' }} onClick={() => close()} />
 
       <div
         ref={frameRef}
-        className="absolute overflow-visible"
+        className="absolute"
         style={{ left: initialRect.left, top: initialRect.top, width: initialRect.width, height: initialRect.height }}
       >
-        <div ref={dragTargetRef} className="absolute inset-0 touch-none">
-          <div ref={imgRef} key={index} className="absolute inset-0 rounded-[inherit] overflow-hidden" style={{ borderRadius: 6 }}>
+        <div
+          ref={panRef}
+          className="absolute inset-0 touch-none select-none cursor-grab active:cursor-grabbing will-change-transform"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+        >
+          <div ref={imgRef} key={idx} className="absolute inset-0 overflow-hidden" style={{ borderRadius: 6 }}>
             <Image
-              src={photos[index].url}
-              alt={photos[index].alt_text ?? (label ? `${title} — ${label}` : title)}
+              src={photos[idx].url}
+              alt={photos[idx].alt_text ?? (label ? `${title} — ${label}` : title)}
               fill
               sizes="100vw"
               className="object-cover pointer-events-none"
@@ -744,7 +818,7 @@ function Lightbox({
       <div ref={chromeRef} className="pointer-events-none absolute inset-0">
         <div className="pointer-events-auto absolute top-0 inset-x-0 flex items-center justify-between px-4 md:px-6 py-3 text-white">
           <span className="text-[12px] text-white/70 tabular-nums" style={{ fontFamily: 'ui-monospace, Menlo, monospace' }}>
-            {pad(index + 1)} / {pad(total)}
+            {pad(idx + 1)} / {pad(total)}
             {label && <span className="ml-3 text-white" style={{ fontFamily: 'var(--font-sans)' }}>{label}</span>}
           </span>
           <button
@@ -762,13 +836,13 @@ function Lightbox({
         {total > 1 && (
           <>
             {(['left', 'right'] as const).map((side) => {
-              const disabled = side === 'left' ? index === 0 : index === total - 1
+              const disabled = side === 'left' ? idx === 0 : idx === total - 1
               return (
                 <button
                   key={side}
                   type="button"
                   disabled={disabled}
-                  onClick={() => onGo(side === 'left' ? index - 1 : index + 1)}
+                  onClick={() => go(side === 'left' ? idx - 1 : idx + 1)}
                   aria-label={side === 'left' ? 'Anterior' : 'Siguiente'}
                   className={`pointer-events-auto hidden md:flex absolute top-1/2 -translate-y-1/2 ${side === 'left' ? 'left-5' : 'right-5'} w-12 h-12 rounded-[4px] items-center justify-center bg-white/10 hover:bg-white/20 text-white transition-all disabled:opacity-0`}
                 >
@@ -783,13 +857,13 @@ function Lightbox({
                 <button
                   key={i}
                   type="button"
-                  onClick={() => onGo(i)}
+                  onClick={() => go(i)}
                   aria-label={angleLabel(p.angle) ?? `Foto ${i + 1}`}
                   className="relative shrink-0 h-[44px] rounded-[4px] overflow-hidden transition-opacity"
                   style={{
                     width: `calc(${(ratios[i] ?? DEFAULT_RATIO).toFixed(3)} * 44px)`,
-                    opacity: i === index ? 1 : 0.4,
-                    outline: i === index ? '2px solid var(--color-orange)' : 'none',
+                    opacity: i === idx ? 1 : 0.4,
+                    outline: i === idx ? '2px solid var(--color-orange)' : 'none',
                     outlineOffset: -2,
                   }}
                 >
