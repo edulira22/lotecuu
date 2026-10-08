@@ -1,13 +1,16 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { animate, stagger, svg } from 'animejs'
+import { animate, createSpring, scrambleText, stagger, svg } from 'animejs'
 
 export function Hero({ count }: { count: number }) {
   const [query, setQuery] = useState('')
   const router = useRouter()
   const textRef = useRef<HTMLDivElement>(null)
   const linesRef = useRef<SVGSVGElement>(null)
+  const accentRef = useRef<HTMLSpanElement>(null)
+  const countRef = useRef<HTMLSpanElement>(null)
+  const dotRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -34,9 +37,36 @@ export function Hero({ count }: { count: number }) {
         })
       : null
 
+    // The city name decodes itself, like a departures board
+    const accent = accentRef.current
+      ? animate(accentRef.current, {
+          innerHTML: scrambleText({ text: 'Chihuahua', chars: 'A-Z', cursor: '▍', revealDelay: 350 }),
+        })
+      : null
+
+    // Live inventory counter rolls up from 0
+    const counter = { n: 0 }
+    const count = countRef.current
+      ? animate(counter, {
+          n: [0, Math.max(0, countRef.current.dataset.n ? Number(countRef.current.dataset.n) : 0)],
+          duration: 1400,
+          delay: 500,
+          ease: 'outExpo',
+          onUpdate: () => { if (countRef.current) countRef.current.textContent = String(Math.round(counter.n)) },
+        })
+      : null
+
+    // Pulsing 'live' dot
+    const pulse = dotRef.current
+      ? animate(dotRef.current, { scale: [1, 1.9], opacity: [0.7, 0], duration: 1600, loop: true, ease: 'out(2)' })
+      : null
+
     return () => {
       intro?.revert()
       draw?.revert()
+      accent?.revert()
+      count?.revert()
+      pulse?.revert()
     }
   }, [])
 
@@ -71,9 +101,19 @@ export function Hero({ count }: { count: number }) {
         <p className="text-[11px] font-[500] uppercase tracking-[0.12em] text-orange mb-3.5 md:mb-[18px]">
           Chihuahua · Autos usados
         </p>
+        {count > 0 && (
+          <div className="inline-flex items-center gap-2 mb-4 md:mb-5 px-3 py-1.5 rounded-pill text-[12px] font-[500] text-white/85" style={{ background: 'rgba(255,255,255,0.08)', border: '0.5px solid rgba(255,255,255,0.14)' }}>
+            <span className="relative flex w-2 h-2">
+              <span ref={dotRef} className="absolute inset-0 rounded-full bg-orange" />
+              <span className="relative w-2 h-2 rounded-full bg-orange" />
+            </span>
+            <span ref={countRef} data-n={count} className="tabular-nums">{count}</span>
+            {count === 1 ? 'auto disponible ahora' : 'autos disponibles ahora'}
+          </div>
+        )}
         <h1 className="text-[32px] md:text-[52px] font-[500] leading-[1.05] tracking-[-0.02em] m-0 mb-5 md:mb-7">
           Encuentra tu próximo auto en{' '}
-          <span className="text-orange">Chihuahua</span>
+          <span ref={accentRef} className="text-orange">Chihuahua</span>
         </h1>
 
         <div

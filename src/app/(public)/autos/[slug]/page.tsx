@@ -3,8 +3,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
-import { ShowroomGallery } from '@/components/ficha/showroom-gallery'
-import { ModelWordmark } from '@/components/ficha/model-wordmark'
+import { AdaptiveGallery } from '@/components/ficha/adaptive-gallery'
+import { RevealText } from '@/components/ui/reveal-text'
 import { sortPhotos } from '@/lib/photo-angles'
 import { ShareButton } from '@/components/ficha/share-button'
 import { StatusPill } from '@/components/ui/status-pill'
@@ -387,19 +387,6 @@ function ContactPanel({
   )
 }
 
-/** Font size that makes the wordmark roughly fill the content width. */
-function wordmarkSize(text: string) {
-  const len = Math.max(text.length, 4)
-  return `clamp(40px, calc((100vw - 48px) / ${(len * 0.74).toFixed(2)}), 230px)`
-}
-
-/** "SENTRA" from model, else the first word of the title — years are never used. */
-function wordmarkText(v: VehicleFull) {
-  const clean = (s: string | null) => (s ?? '').replace(/\b(19|20)\d{2}\b/g, '').trim()
-  const fromTitle = clean(v.title).split(/\s+/)[0]
-  return (clean(v.model) || fromTitle || v.title).toUpperCase().slice(0, 14)
-}
-
 /* ── Page ────────────────────────────────────────────────────── */
 export default async function FichaPage({
   params,
@@ -478,7 +465,6 @@ export default async function FichaPage({
   const callLink = v.seller?.phone ? `tel:${v.seller.phone.replace(/\D/g, '')}` : null
   const mapsLink = v.seller?.google_maps_url ?? null
 
-  const word = wordmarkText(v)
   const eyebrow = [v.brand, v.body_type].filter(Boolean).join(' · ')
 
   // Fire-and-forget view event
@@ -508,15 +494,9 @@ export default async function FichaPage({
         <ShareButton title={v.title} price={v.price ? fmtPrice(v.price) : null} />
       </div>
 
-      {/* ── Showroom: wordmark behind the photo stage ── */}
-      <section
-        className="relative px-5 md:px-10 pt-5 md:pt-8"
-        style={{ ['--wm' as string]: wordmarkSize(word) }}
-      >
-        <ModelWordmark text={word} />
-        <div className="relative z-[1] mt-[calc(var(--wm)*-0.22)] md:mt-[calc(var(--wm)*-0.5)]">
-          <ShowroomGallery photos={sortedPhotos} vehicleId={v.id} vehicleTitle={v.title} />
-        </div>
+      {/* ── Adaptive gallery ── */}
+      <section className="px-5 md:px-10 pt-5 md:pt-8">
+        <AdaptiveGallery photos={sortedPhotos} vehicleId={v.id} vehicleTitle={v.title} />
       </section>
 
       {/* ── Identity · key specs · price ── */}
@@ -531,7 +511,7 @@ export default async function FichaPage({
               {v.featured && <FeaturedPill />}
             </div>
             <h1 className="text-[28px] md:text-[40px] font-[500] leading-[1.05] tracking-[-0.02em] m-0">
-              {v.title}
+              <RevealText delay={200}>{v.title}</RevealText>
             </h1>
             {v.version && <p className="text-[15px] md:text-[17px] text-text-muted m-0">{v.version}</p>}
           </div>
