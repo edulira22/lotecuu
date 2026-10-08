@@ -564,7 +564,8 @@ export default async function FichaPage({
   const callLink = v.seller?.phone ? `tel:${v.seller.phone.replace(/\D/g, '')}` : null
   const mapsLink = v.seller?.google_maps_url ?? null
 
-  const eyebrow = [v.brand, v.body_type].filter(Boolean).join(' · ')
+  // Brand already leads the title ("Nissan Pathfinder"); fall back to it only for older titles
+  const eyebrow = [v.brand && !v.title.toLowerCase().includes(v.brand.toLowerCase()) ? v.brand : null, v.body_type].filter(Boolean).join(' · ')
 
   // Fire-and-forget view event
   void supabase.from('vehicle_events').insert({

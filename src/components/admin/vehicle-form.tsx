@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -20,10 +20,8 @@ const BRAND_OPTIONS: ComboOption[] = CATALOG.map((b) => ({ value: b.brand }))
 
 const schema = z.object({
   seller_id: z.string().uuid('Selecciona un vendedor'),
-  title: z.string().min(3, 'Requerido'),
-  slug: z.string().min(3, 'Requerido'),
-  brand: z.string().optional(),
-  model: z.string().optional(),
+  brand: z.string().trim().min(1, 'Elige la marca'),
+  model: z.string().trim().min(1, 'Elige el modelo'),
   version: z.string().optional(),
   year: z.coerce.number().int().min(1950).max(2030).optional().or(z.literal('')),
   price: z.coerce.number().min(0).optional().or(z.literal('')),
@@ -82,8 +80,6 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
     resolver: zodResolver(schema),
     defaultValues: {
       seller_id: vehicle?.seller_id ?? lockedSellerId ?? '',
-      title: vehicle?.title ?? '',
-      slug: vehicle?.slug ?? '',
       brand: vehicle?.brand ?? '',
       model: vehicle?.model ?? '',
       version: vehicle?.version ?? '',
@@ -116,7 +112,6 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
   /* ── Brand → model pickers ── */
   const brand = watch('brand') ?? ''
   const model = watch('model') ?? ''
-  const year = watch('year')
   const brandEntry = useMemo(() => CATALOG.find((b) => normName(b.brand) === normName(brand)), [brand])
   const modelOptions = useMemo<ComboOption[]>(
     () => (brandEntry?.models ?? []).map((m) => ({ value: m.n, tag: m.us ? 'EUA' : undefined })),
@@ -124,7 +119,7 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
   )
 
   function changeBrand(v: string) {
-    setValue('brand', v, { shouldDirty: true })
+    setValue('brand', v, { shouldDirty: true, shouldValidate: !!errors.brand })
     const entry = CATALOG.find((b) => normName(b.brand) === normName(v))
     // A model from another brand makes no sense — clear it
     if (getValues('model') && !entry?.models.some((m) => normName(m.n) === normName(getValues('model') ?? ''))) {
@@ -132,29 +127,10 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
     }
   }
 
-  // Title fills itself ("Nissan Versa 2018") until the user writes their own
-  const autoTitle = useRef('')
-  useEffect(() => {
-    if (isEdit) return
-    const next = [brand, model, year ? String(year) : ''].filter(Boolean).join(' ')
-    const current = getValues('title') ?? ''
-    if (next && (!current || current === autoTitle.current)) {
-      autoTitle.current = next
-      setValue('title', next)
-      setValue('slug', slugify(next))
-    }
-  }, [brand, model, year, isEdit, getValues, setValue])
-
   function friendlyError(message: string) {
     return /financing_details/.test(message)
       ? 'Para guardar los detalles del financiamiento falta correr la migración 005 en Supabase.'
       : message
-  }
-
-  function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const title = e.target.value
-    setValue('title', title)
-    if (!isEdit) setValue('slug', slugify(title))
   }
 
   async function onSubmit(data: FormData) {
@@ -167,12 +143,12 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
     }
     const supabase = createClient()
 
+    // The public title is the vehicle itself: "Nissan Pathfinder" (year and version show apart)
     const payload = {
       seller_id: data.seller_id,
-      title: data.title,
-      slug: data.slug,
-      brand: data.brand || null,
-      model: data.model || null,
+      title: `${data.brand} ${data.model}`,
+      brand: data.brand,
+      model: data.model,
       version: data.version || null,
       year: data.year !== '' ? Number(data.year) : null,
       price: data.price !== '' ? Number(data.price) : null,
@@ -207,12 +183,14 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
       router.refresh()
       return
     } else {
-      const { data: created, error } = await supabase
-        .from('vehicles')
-        .insert(payload)
-        .select()
-        .single()
-      if (error) { setServerError(friendlyError(error.message)); setSaving(false); return }
+      // URL from brand-model-year; if it's taken (another identical car), add a short suffix
+      const base = slugify([data.brand, data.model, data.year].filter(Boolean).join(' '))
+      const insert = (slug: string) => supabase.from('vehicles').insert({ ...payload, slug }).select().single()
+      let { data: created, error } = await insert(base)
+      if (error?.code === '23505' && /slug/.test(error.message)) {
+        ;({ data: created, error } = await insert(`${base}-${Math.random().toString(36).slice(2, 6)}`))
+      }
+      if (error || !created) { setServerError(friendlyError(error?.message ?? 'No se pudo guardar.')); setSaving(false); return }
       setSavedVehicleId(created.id)
       setSaving(false)
       return
@@ -305,7 +283,7 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
           <div className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">Datos del vehículo</div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <AdminField label="Marca" error={errors.brand?.message}>
+            <AdminField label="Marca *" error={errors.brand?.message}>
               <Combobox
                 value={brand}
                 onChange={changeBrand}
@@ -315,10 +293,10 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
                 inputStyle={inputStyle}
               />
             </AdminField>
-            <AdminField label="Modelo" error={errors.model?.message}>
+            <AdminField label="Modelo *" error={errors.model?.message}>
               <Combobox
                 value={model}
-                onChange={(v) => setValue('model', v, { shouldDirty: true })}
+                onChange={(v) => setValue('model', v, { shouldDirty: true, shouldValidate: !!errors.model })}
                 options={modelOptions}
                 placeholder={brandEntry ? `Modelos de ${brandEntry.brand}…` : 'Escribe el modelo'}
                 disabled={!brand}
@@ -331,20 +309,6 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
               <input {...register('version')} className={inputClass} style={inputStyle} placeholder="Ej. Advance, TRD Sport" />
             </AdminField>
           </div>
-
-          <AdminField label="Título *" error={errors.title?.message}>
-            <input
-              {...register('title')}
-              onChange={handleTitleChange}
-              className={inputClass}
-              style={inputStyle}
-              placeholder="Se llena solo: Nissan Versa 2018"
-            />
-          </AdminField>
-
-          <AdminField label="Slug (URL)" error={errors.slug?.message}>
-            <input {...register('slug')} className={inputClass} style={inputStyle} placeholder="nissan-versa-2018" />
-          </AdminField>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <AdminField label="Año" error={errors.year?.message}>
