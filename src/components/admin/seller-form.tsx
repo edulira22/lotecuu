@@ -29,8 +29,8 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 function friendlyError(message: string) {
-  return /phone2|whatsapp2/.test(message)
-    ? 'Para guardar números alternos falta correr la migración 005 en Supabase.'
+  return /phone2|whatsapp2|'email'/.test(message)
+    ? 'Falta correr en Supabase el SQL de columnas pendientes (correo y números alternos). Mientras tanto deja esos campos vacíos.'
     : message
 }
 
@@ -89,7 +89,7 @@ export function SellerForm({ seller, backHref }: SellerFormProps) {
       whatsapp: data.whatsapp,
       business_name: data.business_name || null,
       phone: data.phone || null,
-      email: data.email || null,
+      ...(data.email || seller?.email ? { email: data.email || null } : {}),
       description: data.description || null,
       address: data.address || null,
       google_maps_url: data.google_maps_url || null,

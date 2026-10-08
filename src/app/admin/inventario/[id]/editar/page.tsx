@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { VehicleForm } from '@/components/admin/vehicle-form'
+import { VehicleLedger } from '@/components/admin/vehicle-ledger'
+import { VehicleDocuments } from '@/components/admin/vehicle-documents'
 
 export const metadata = { title: 'Editar vehículo' }
 
@@ -43,6 +45,10 @@ export default async function EditarVehiculoPage({
         vehicle={vehicle}
         photos={photos ?? []}
       />
+      <div className="flex flex-col gap-8 max-w-3xl mt-8">
+        <VehicleLedger vehicleId={vehicle.id} listPrice={vehicle.price} status={vehicle.status} />
+        <VehicleDocuments vehicleId={vehicle.id} />
+      </div>
     </div>
   )
 }

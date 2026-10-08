@@ -26,6 +26,12 @@ export default async function VendorNuevoPage() {
 
   if ((count ?? 0) >= seller.max_vehicles) redirect('/vendedor/inventario')
 
+  const { count: featuredUsed } = await supabase
+    .from('vehicles')
+    .select('id', { count: 'exact', head: true })
+    .eq('seller_id', seller.id)
+    .eq('featured', true)
+
   return (
     <div className="p-8">
       <Link href="/vendedor/inventario" className="inline-flex items-center gap-1.5 text-[13px] text-text-muted hover:text-text-base mb-6 transition-colors">
@@ -33,7 +39,12 @@ export default async function VendorNuevoPage() {
         Mis autos
       </Link>
       <h1 className="text-[28px] font-[600] tracking-tight mb-8">Agregar auto</h1>
-      <VehicleForm sellers={[seller]} lockedSellerId={seller.id} backHref="/vendedor/inventario" />
+      <VehicleForm
+        sellers={[seller]}
+        lockedSellerId={seller.id}
+        backHref="/vendedor/inventario"
+        featuredLimit={{ max: seller.max_featured ?? 0, used: featuredUsed ?? 0 }}
+      />
     </div>
   )
 }

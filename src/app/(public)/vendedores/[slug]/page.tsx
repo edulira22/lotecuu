@@ -8,6 +8,7 @@ import { StatusPill } from '@/components/ui/status-pill'
 import { InventoryTabs } from '@/components/seller/inventory-tabs'
 import { Stagger } from '@/components/ui/stagger'
 import { CardMedia } from '@/components/feed/card-media'
+import { SellerMark } from '@/components/ui/seller-mark'
 import { fmtPrice, fmtKm } from '@/lib/format'
 import { buildWhatsAppLink } from '@/lib/whatsapp'
 import type { VehicleStatus } from '@/lib/supabase/database.types'
@@ -26,6 +27,8 @@ type SellerRow = {
   address: string | null
   google_maps_url: string | null
   created_at: string
+  logo_url: string | null
+  profile_photo_url: string | null
 }
 
 type VehicleRow = {
@@ -168,14 +171,15 @@ export default async function VendedorPage({
         <div className="relative flex flex-col md:flex-row md:items-end gap-4 md:gap-7">
           {/* Logo plate */}
           <div
-            className="inline-flex shrink-0 p-3.5 md:p-5 rounded-[6px]"
+            className="inline-flex shrink-0 p-2.5 md:p-3 rounded-[6px]"
             style={{ background: 'rgba(255,255,255,0.96)', boxShadow: '0 12px 40px rgba(0,0,0,0.18)' }}
           >
-            <div className="w-[72px] h-[72px] md:w-24 md:h-24 flex items-center justify-center rounded-xl bg-surface-alt">
-              <span className="text-[28px] md:text-[36px] font-[600] text-teal tracking-tight">
-                {seller.name.slice(0, 2).toUpperCase()}
-              </span>
-            </div>
+            <SellerMark
+              name={seller.business_name ?? seller.name}
+              logoUrl={seller.logo_url}
+              photoUrl={seller.profile_photo_url}
+              size={104}
+            />
           </div>
 
           <div className="flex flex-col gap-2.5 flex-1 min-w-0">

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { AdaptiveGallery } from '@/components/ficha/adaptive-gallery'
 import { RevealText } from '@/components/ui/reveal-text'
 import { ScrambleValue } from '@/components/ui/scramble-value'
+import { SellerMark } from '@/components/ui/seller-mark'
 import { sortPhotos } from '@/lib/photo-angles'
 import { ShareButton } from '@/components/ficha/share-button'
 import { StatusPill } from '@/components/ui/status-pill'
@@ -30,6 +31,8 @@ type SellerRow = {
   whatsapp2?: string | null
   address: string | null
   google_maps_url: string | null
+  logo_url: string | null
+  profile_photo_url: string | null
   slug: string
 }
 
@@ -167,10 +170,21 @@ function SellerCard({
         <span className="text-[10px] text-text-muted uppercase tracking-[0.1em] font-[500]">
           Vendedor
         </span>
-        <span className="text-[16px] font-[500] text-teal">{seller.name}</span>
-        {seller.business_name && (
-          <span className="text-[12px] text-text-muted">{seller.business_name}</span>
-        )}
+        <div className="flex items-center gap-3 mt-1">
+          <SellerMark
+            name={seller.business_name ?? seller.name}
+            logoUrl={seller.logo_url}
+            photoUrl={seller.profile_photo_url}
+            size={48}
+            className="border-hairline border-[var(--gray-line)]"
+          />
+          <div className="flex flex-col min-w-0">
+            <span className="text-[16px] font-[500] text-teal">{seller.name}</span>
+            {seller.business_name && seller.business_name !== seller.name && (
+              <span className="text-[12px] text-text-muted">{seller.business_name}</span>
+            )}
+          </div>
+        </div>
         {seller.address && (
           <span className="text-[12px] text-text-muted flex items-center gap-1 mt-0.5">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

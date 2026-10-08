@@ -33,6 +33,7 @@ export type Database = {
           auth_user_id: string | null
           plan: 'basico' | 'pro' | 'premium'
           max_vehicles: number
+          max_featured: number
           payment_status: 'al_corriente' | 'atrasado' | 'suspendido'
           payment_notes: string | null
           plan_expires_at: string | null
@@ -57,6 +58,7 @@ export type Database = {
           auth_user_id?: string | null
           plan?: 'basico' | 'pro' | 'premium'
           max_vehicles?: number
+          max_featured?: number
           payment_status?: 'al_corriente' | 'atrasado' | 'suspendido'
           payment_notes?: string | null
           plan_expires_at?: string | null
@@ -81,6 +83,7 @@ export type Database = {
           auth_user_id?: string | null
           plan?: 'basico' | 'pro' | 'premium'
           max_vehicles?: number
+          max_featured?: number
           payment_status?: 'al_corriente' | 'atrasado' | 'suspendido'
           payment_notes?: string | null
           plan_expires_at?: string | null
@@ -247,6 +250,66 @@ export type Database = {
           },
         ]
       }
+      vehicle_private: {
+        Row: {
+          vehicle_id: string
+          purchase_price: number | null
+          extra_costs: number | null
+          sale_price: number | null
+          sold_at: string | null
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          vehicle_id: string
+          purchase_price?: number | null
+          extra_costs?: number | null
+          sale_price?: number | null
+          sold_at?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          vehicle_id?: string
+          purchase_price?: number | null
+          extra_costs?: number | null
+          sale_price?: number | null
+          sold_at?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vehicle_documents: {
+        Row: {
+          id: string
+          vehicle_id: string
+          name: string
+          storage_path: string
+          size_bytes: number | null
+          mime_type: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          vehicle_id: string
+          name: string
+          storage_path: string
+          size_bytes?: number | null
+          mime_type?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          vehicle_id?: string
+          name?: string
+          storage_path?: string
+          size_bytes?: number | null
+          mime_type?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       vehicle_events: {
         Row: {
           id: string
@@ -292,6 +355,8 @@ export type Seller = Database['public']['Tables']['sellers']['Row']
 export type Vehicle = Database['public']['Tables']['vehicles']['Row']
 export type VehiclePhoto = Database['public']['Tables']['vehicle_photos']['Row']
 export type VehicleEvent = Database['public']['Tables']['vehicle_events']['Row']
+export type VehiclePrivate = Database['public']['Tables']['vehicle_private']['Row']
+export type VehicleDocument = Database['public']['Tables']['vehicle_documents']['Row']
 
 export type VehicleWithSeller = Vehicle & {
   seller: Seller

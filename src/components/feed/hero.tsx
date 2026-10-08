@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { animate, createSpring, splitText, stagger, svg } from 'animejs'
+import { animate, createSpring, splitText, stagger } from 'animejs'
 import { HeroEmblem } from './hero-emblem'
 
 export function Hero({ count }: { count: number }) {
@@ -9,15 +9,11 @@ export function Hero({ count }: { count: number }) {
   const router = useRouter()
   const textRef = useRef<HTMLDivElement>(null)
   const accentRef = useRef<HTMLSpanElement>(null)
-  const underlineRef = useRef<SVGPathElement>(null)
   const countRef = useRef<HTMLSpanElement>(null)
   const dotRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      if (underlineRef.current) underlineRef.current.style.opacity = '1'
-      return
-    }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     // Text blocks slide up in sequence (translate only — never hides the H1/LCP)
     const blocks = textRef.current ? Array.from(textRef.current.children) : []
@@ -25,7 +21,7 @@ export function Hero({ count }: { count: number }) {
       ? animate(blocks, { translateY: [22, 0], duration: 800, delay: stagger(90), ease: 'outExpo' })
       : null
 
-    // "Chihuahua": letters spring up out of a mask, one after another…
+    // "Chihuahua": letters spring up out of a mask, one after another
     const split = accentRef.current ? splitText(accentRef.current, { chars: { wrap: 'clip' } }) : null
     const letters = split
       ? animate(split.chars, {
@@ -35,18 +31,6 @@ export function Hero({ count }: { count: number }) {
           ease: createSpring({ mass: 1, stiffness: 140, damping: 13 }),
         })
       : null
-
-    // …then an orange speed stroke draws itself underneath
-    let underline: ReturnType<typeof animate> | null = null
-    if (underlineRef.current) {
-      underlineRef.current.style.opacity = '1'
-      underline = animate(svg.createDrawable(underlineRef.current), {
-        draw: ['0 0', '0 1'],
-        delay: 900,
-        duration: 900,
-        ease: 'inOut(3)',
-      })
-    }
 
     // Live inventory counter rolls up from 0
     const counter = { n: 0 }
@@ -70,7 +54,6 @@ export function Hero({ count }: { count: number }) {
       intro?.revert()
       letters?.revert()
       split?.revert()
-      underline?.revert()
       count?.revert()
       pulse?.revert()
     }
@@ -110,23 +93,6 @@ export function Hero({ count }: { count: number }) {
           Encuentra tu próximo auto en{' '}
           <span className="relative inline-block text-orange">
             <span ref={accentRef}>Chihuahua</span>
-            <svg
-              aria-hidden
-              viewBox="0 0 300 16"
-              preserveAspectRatio="none"
-              className="absolute left-0 -bottom-[0.14em] w-full h-[0.22em] overflow-visible"
-            >
-              <path
-                ref={underlineRef}
-                d="M2 12 L248 4 M262 9 L298 7"
-                fill="none"
-                stroke="#FB9833"
-                strokeWidth="3.5"
-                strokeLinecap="square"
-                vectorEffect="non-scaling-stroke"
-                style={{ opacity: 0 }}
-              />
-            </svg>
           </span>
         </h1>
 

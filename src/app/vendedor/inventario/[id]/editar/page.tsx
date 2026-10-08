@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { VehicleForm } from '@/components/admin/vehicle-form'
+import { VehicleLedger } from '@/components/admin/vehicle-ledger'
+import { VehicleDocuments } from '@/components/admin/vehicle-documents'
 import type { Seller, Vehicle, VehiclePhoto } from '@/lib/supabase/database.types'
 
 export const metadata = { title: 'Editar auto — LoteCUU' }
@@ -18,27 +20,40 @@ export default async function VendorEditarPage({ params }: { params: Promise<{ i
   if (!sellerData) redirect('/login')
   const seller = sellerData as unknown as Seller
 
-  const { data: vehicle } = await supabase
+  const { data: vehicleData } = await supabase
     .from('vehicles').select('*').eq('id', id).eq('seller_id', seller.id).single()
-  if (!vehicle) notFound()
+  if (!vehicleData) notFound()
+  const vehicle = vehicleData as unknown as Vehicle
 
-  const { data: photos } = await supabase
-    .from('vehicle_photos').select('*').eq('vehicle_id', id).order('sort_order')
+  const [{ data: photos }, { count: featuredUsed }] = await Promise.all([
+    supabase.from('vehicle_photos').select('*').eq('vehicle_id', id).order('sort_order'),
+    supabase
+      .from('vehicles')
+      .select('id', { count: 'exact', head: true })
+      .eq('seller_id', seller.id)
+      .eq('featured', true)
+      .neq('id', id),
+  ])
 
   return (
-    <div className="p-8">
-      <Link href="/vendedor/inventario" className="inline-flex items-center gap-1.5 text-[13px] text-text-muted hover:text-text-base mb-6 transition-colors">
-        <ChevronLeft size={14} />
-        Mis autos
-      </Link>
-      <h1 className="text-[28px] font-[600] tracking-tight mb-8">Editar: {vehicle.title}</h1>
+    <div className="p-8 flex flex-col gap-8 max-w-3xl">
+      <div>
+        <Link href="/vendedor/inventario" className="inline-flex items-center gap-1.5 text-[13px] text-text-muted hover:text-text-base mb-6 transition-colors">
+          <ChevronLeft size={14} />
+          Mis autos
+        </Link>
+        <h1 className="text-[28px] font-[600] tracking-tight m-0">Editar: {vehicle.title}</h1>
+      </div>
       <VehicleForm
         sellers={[seller]}
-        vehicle={vehicle as unknown as Vehicle}
+        vehicle={vehicle}
         photos={(photos ?? []) as unknown as VehiclePhoto[]}
         lockedSellerId={seller.id}
         backHref="/vendedor/inventario"
+        featuredLimit={{ max: seller.max_featured ?? 0, used: featuredUsed ?? 0 }}
       />
+      <VehicleLedger vehicleId={vehicle.id} listPrice={vehicle.price} status={vehicle.status} />
+      <VehicleDocuments vehicleId={vehicle.id} />
     </div>
   )
 }

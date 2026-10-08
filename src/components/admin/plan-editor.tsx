@@ -11,6 +11,8 @@ export function PlanEditor({ seller }: { seller: Seller }) {
   const [open, setOpen] = useState(false)
   const [plan, setPlan] = useState(seller.plan)
   const [max, setMax] = useState(String(seller.max_vehicles))
+  const initialFeatured = String(seller.max_featured ?? 0)
+  const [maxFeatured, setMaxFeatured] = useState(initialFeatured)
   const [status, setStatus] = useState(seller.payment_status)
   const [notes, setNotes] = useState<string>(seller.payment_notes ?? '')
   const [saving, setSaving] = useState(false)
@@ -19,7 +21,11 @@ export function PlanEditor({ seller }: { seller: Seller }) {
   async function save() {
     setSaving(true)
     setError('')
-    const res = await updateSellerPlan(seller.id, plan, Number(max), status, notes)
+    const res = await updateSellerPlan(
+      seller.id, plan, Number(max), status, notes,
+      // Only sent when changed, so the editor still works before migration 006
+      maxFeatured !== initialFeatured ? Math.max(0, Number(maxFeatured)) : undefined,
+    )
     setSaving(false)
     if ('error' in res) { setError(res.error ?? ''); return }
     setOpen(false)
@@ -59,6 +65,12 @@ export function PlanEditor({ seller }: { seller: Seller }) {
               <label className="flex flex-col gap-1.5">
                 <span className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">Máx. vehículos</span>
                 <input type="number" value={max} onChange={(e) => setMax(e.target.value)} min={1} max={999} className={inputClass} style={inputStyle} />
+              </label>
+
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">Máx. autos destacados</span>
+                <input type="number" value={maxFeatured} onChange={(e) => setMaxFeatured(e.target.value)} min={0} max={999} className={inputClass} style={inputStyle} />
+                <span className="text-[11px] text-text-muted">0 = el vendedor no puede destacar autos desde su portal. Tú siempre puedes.</span>
               </label>
 
               <label className="flex flex-col gap-1.5">

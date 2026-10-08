@@ -48,12 +48,16 @@ interface VehicleFormProps {
   vehicle?: Vehicle
   photos?: VehiclePhoto[]
   lockedSellerId?: string
+  /** Seller portal only: how many featured cars the plan allows / already uses (other cars) */
+  featuredLimit?: { max: number; used: number }
   backHref?: string
 }
 
 const selectClass = `${inputClass} cursor-pointer`
 
-export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, backHref }: VehicleFormProps) {
+export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, backHref, featuredLimit }: VehicleFormProps) {
+  // A car that is already featured keeps its spot; a new one needs a free slot
+  const featuredLocked = !!featuredLimit && !vehicle?.featured && featuredLimit.used >= featuredLimit.max
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [serverError, setServerError] = useState('')
@@ -117,6 +121,11 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
   async function onSubmit(data: FormData) {
     setSaving(true)
     setServerError('')
+    if (data.featured && featuredLocked) {
+      setServerError('Alcanzaste el límite de autos destacados de tu plan.')
+      setSaving(false)
+      return
+    }
     const supabase = createClient()
 
     const payload = {
@@ -211,13 +220,33 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
               ['accepts_trade', 'Acepta auto a cuenta'],
               ['financing', 'Tiene financiamiento'],
               ['single_owner', 'Único dueño'],
-            ] as const).map(([field, label]) => (
-              <label key={field} className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" {...register(field)} className="w-4 h-4 accent-orange" />
-                <span className="text-[13px] font-[500]">{label}</span>
-              </label>
-            ))}
+            ] as const).map(([field, label]) => {
+              const locked = field === 'featured' && featuredLocked
+              return (
+                <label key={field} className={`flex items-center gap-2 ${locked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+                  {locked ? (
+                    // Not registered: a disabled registered input would submit `undefined`
+                    <input type="checkbox" checked={false} disabled readOnly className="w-4 h-4 accent-orange" />
+                  ) : (
+                    <input type="checkbox" {...register(field)} className="w-4 h-4 accent-orange" />
+                  )}
+                  <span className="text-[13px] font-[500]">
+                    {label}
+                    {field === 'featured' && featuredLimit && (
+                      <span className="text-text-muted font-[400]"> ({featuredLimit.used}/{featuredLimit.max})</span>
+                    )}
+                  </span>
+                </label>
+              )
+            })}
           </div>
+          {featuredLocked && (
+            <p className="text-[12px] text-text-muted -mt-2 m-0">
+              {featuredLimit!.max === 0
+                ? 'Tu plan no incluye autos destacados. Contacta a la administración si te interesa.'
+                : `Ya usas tus ${featuredLimit!.max} autos destacados. Quita el destacado de otro auto para usarlo aquí.`}
+            </p>
+          )}
 
           {financingOn && (
             <AdminField label="Detalles del financiamiento (opcional)">

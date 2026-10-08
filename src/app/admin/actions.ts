@@ -97,13 +97,26 @@ export async function updateSellerPlan(
   maxVehicles: number,
   paymentStatus: 'al_corriente' | 'atrasado' | 'suspendido',
   paymentNotes: string,
+  maxFeatured?: number,
 ) {
   const adminClient = createAdminClient()
   const { error } = await adminClient
     .from('sellers')
-    .update({ plan, max_vehicles: maxVehicles, payment_status: paymentStatus, payment_notes: paymentNotes || null })
+    .update({
+      plan,
+      max_vehicles: maxVehicles,
+      payment_status: paymentStatus,
+      payment_notes: paymentNotes || null,
+      ...(maxFeatured !== undefined ? { max_featured: maxFeatured } : {}),
+    })
     .eq('id', sellerId)
-  if (error) return { error: error.message }
+  if (error) {
+    return {
+      error: /max_featured/.test(error.message)
+        ? 'Para fijar el límite de destacados falta correr la migración 006 en Supabase.'
+        : error.message,
+    }
+  }
   revalidatePath('/admin/vendedores')
   revalidatePath('/admin/dashboard')
   return { success: true }

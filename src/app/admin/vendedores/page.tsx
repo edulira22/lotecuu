@@ -10,10 +10,10 @@ export default async function VendedoresAdminPage() {
   const supabase = await createClient()
   const { data: sellersData } = await supabase
     .from('sellers')
-    .select('*, vehicles(id, status)')
+    .select('*, vehicles(id, status, featured)')
     .order('created_at', { ascending: false })
 
-  const sellers = (sellersData ?? []) as unknown as (Seller & { vehicles: { id: string; status: string }[] })[]
+  const sellers = (sellersData ?? []) as unknown as (Seller & { vehicles: { id: string; status: string; featured: boolean }[] })[]
 
   return (
     <div className="p-8 max-w-5xl">
@@ -81,6 +81,9 @@ export default async function VendedoresAdminPage() {
             <div className="text-[13px]">
               <span className={atLimit ? 'text-red-500 font-[500]' : 'text-text-base'}>{activeCount}</span>
               <span className="text-text-muted"> / {seller.max_vehicles}</span>
+              <div className="text-[11px] text-text-muted mt-0.5" title="Destacados usados / permitidos">
+                ★ {seller.vehicles?.filter((v) => v.featured).length ?? 0}/{seller.max_featured ?? 0}
+              </div>
             </div>
             <div className="text-[13px] text-text-muted">{seller.whatsapp || '—'}</div>
             <div>

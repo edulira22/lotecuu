@@ -2,6 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/ui/navbar'
 import { Stagger } from '@/components/ui/stagger'
+import { SellerMark } from '@/components/ui/seller-mark'
 
 export const metadata = { title: 'Vendedores en Chihuahua — LoteCUU' }
 
@@ -13,6 +14,8 @@ type SellerWithCount = {
   whatsapp: string
   description: string | null
   address: string | null
+  logo_url: string | null
+  profile_photo_url: string | null
 }
 
 export default async function VendedoresPage() {
@@ -20,7 +23,7 @@ export default async function VendedoresPage() {
 
   const { data: sellers } = await supabase
     .from('sellers')
-    .select('id, name, business_name, slug, whatsapp, description, address')
+    .select('id, name, business_name, slug, whatsapp, description, address, logo_url, profile_photo_url')
     .eq('active', true)
     .order('name')
 
@@ -74,12 +77,7 @@ export default async function VendedoresPage() {
                     style={{ background: 'linear-gradient(90deg, #1B768E, #FB9833)' }}
                   />
                   <div className="p-5 flex items-start gap-4">
-                    {/* Initials plate */}
-                    <div className="w-12 h-12 rounded-xl bg-surface-alt flex items-center justify-center shrink-0">
-                      <span className="text-[18px] font-[600] text-teal tracking-tight">
-                        {s.name.slice(0, 2).toUpperCase()}
-                      </span>
-                    </div>
+                    <SellerMark name={s.business_name ?? s.name} logoUrl={s.logo_url} photoUrl={s.profile_photo_url} size={56} />
                     <div className="flex flex-col gap-1 flex-1 min-w-0">
                       <p className="text-[15px] font-[500] leading-tight truncate">
                         {s.business_name ?? s.name}

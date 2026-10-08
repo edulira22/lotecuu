@@ -76,7 +76,14 @@ export function SellerPhotoUploader({
 
       {url ? (
         <div className="relative w-24 h-24 rounded-[6px] overflow-hidden group" style={{ border: '0.5px solid var(--gray-line)' }}>
-          <Image src={url} alt={label} fill className="object-cover" />
+          <Image
+            src={url}
+            alt={label}
+            fill
+            sizes="96px"
+            // Logos are shown whole (never cropped); profile photos fill the square
+            className={field === 'logo_url' ? 'object-contain p-1.5 bg-white' : 'object-cover'}
+          />
           <button
             type="button"
             onClick={removePhoto}
