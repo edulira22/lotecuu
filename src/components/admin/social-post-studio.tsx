@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
-import { Copy, Download, Share2, Check } from 'lucide-react'
+import { Copy, Download, Share2, Check, Star } from 'lucide-react'
 import { fmtPhone } from '@/lib/format'
 import {
-  POST_SIZES, buildCaption, renderPost, suggestPhotoCount,
+  MAX_PHOTOS, POST_DESIGNS, POST_SIZES, buildCaption, getPhotoFrame, rankArrangements, renderPost, suggestPhotoCount,
   type PostDesign, type PostFormat, type PostTheme, type PostVehicle,
 } from '@/lib/social-post'
 
@@ -39,6 +39,31 @@ async function resolveFont() {
   return family
 }
 
+function canvasToBlob(canvas: HTMLCanvasElement, type: string) {
+  return new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, 0.92))
+}
+
+async function copyText(text: string) {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    // Fallback for browsers without the async clipboard
+    const ta = document.createElement('textarea')
+    ta.value = text
+    ta.style.position = 'fixed'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.select()
+    const ok = document.execCommand('copy')
+    ta.remove()
+    return ok
+  }
+}
+
+type Quality = 1 | 2
+type FileKind = 'jpg' | 'png'
+
 export function SocialPostStudio({
   vehicle,
   brand,
@@ -59,20 +84,24 @@ export function SocialPostStudio({
   const [theme, setTheme] = useState<PostTheme>('light')
   const [design, setDesign] = useState<PostDesign>('framed')
   const [images, setImages] = useState<(HTMLImageElement | null)[] | null>(null)
-  /** Indices into `photos`, in mosaic order (first = largest tile) */
+  /** Indices into `photos`, in mosaic order (first = main photo) */
   const [selected, setSelected] = useState<number[]>([0])
   const [manualPick, setManualPick] = useState(false)
   const [active, setActive] = useState(0)
   const [focusMap, setFocusMap] = useState<Record<number, number>>({})
+  const [arrangement, setArrangement] = useState(0)
   const [showPrice, setShowPrice] = useState(!!vehicle.price)
   const [showSeller, setShowSeller] = useState(!!seller)
   const [showContact, setShowContact] = useState(false)
+  const [quality, setQuality] = useState<Quality>(1)
+  const [fileKind, setFileKind] = useState<FileKind>('jpg')
   const [font, setFont] = useState<string | null>(null)
   const [origin, setOrigin] = useState('')
   const [caption, setCaption] = useState('')
   const [captionEdited, setCaptionEdited] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useState<'' | 'download' | 'share'>('')
+  const [notice, setNotice] = useState('')
   const [canShare, setCanShare] = useState(false)
 
   const phone = seller?.whatsapp || seller?.phone || null
@@ -83,9 +112,11 @@ export function SocialPostStudio({
   useEffect(() => {
     setOrigin(window.location.origin)
     resolveFont().then(setFont)
+    // Sharing straight to Instagram/WhatsApp only makes sense on phones
     try {
+      const touch = window.matchMedia('(pointer: coarse)').matches
       const probe = new File([new Blob()], 'p.jpg', { type: 'image/jpeg' })
-      setCanShare(!!navigator.canShare?.({ files: [probe] }))
+      setCanShare(touch && !!navigator.canShare?.({ files: [probe] }))
     } catch { setCanShare(false) }
   }, [])
 
@@ -95,18 +126,31 @@ export function SocialPostStudio({
     return () => { cancelled = true }
   }, [photos])
 
+  const base = useMemo(
+    () => (font ? { format, theme, design, showPrice, contact, site, font } : null),
+    [format, theme, design, showPrice, contact, site, font],
+  )
+  const frameInfo = useMemo(() => (base ? getPhotoFrame(vehicle, base) : null), [base, vehicle])
+  const aspectOf = useCallback((i: number) => images![i]!.naturalWidth / images![i]!.naturalHeight, [images])
+
   // How many photos suit this format, from their proportions (until the user picks by hand)
   const usable = useMemo(() => (images ?? []).map((img, i) => (img ? i : -1)).filter((i) => i >= 0), [images])
   const suggested = useMemo(() => {
-    if (!images || !usable.length) return 1
-    const aspects = usable.map((i) => images[i]!.naturalWidth / images[i]!.naturalHeight)
-    return suggestPhotoCount(format, design, aspects)
-  }, [images, usable, format, design])
+    if (!frameInfo || !usable.length) return 1
+    return suggestPhotoCount(frameInfo.frame, usable.map(aspectOf), frameInfo.gap)
+  }, [frameInfo, usable, aspectOf])
   useEffect(() => {
     if (manualPick || !usable.length) return
     setSelected(usable.slice(0, suggested))
     setActive(usable[0])
   }, [manualPick, suggested, usable])
+
+  const chosen = useMemo(() => selected.filter((i) => images?.[i]), [selected, images])
+  const arrangements = useMemo(() => {
+    if (!frameInfo || !chosen.length) return []
+    return rankArrangements(frameInfo.frame, chosen.map(aspectOf), frameInfo.gap, 4)
+  }, [frameInfo, chosen, aspectOf])
+  useEffect(() => { setArrangement(0) }, [chosen, format, design])
 
   function togglePhoto(i: number) {
     setManualPick(true)
@@ -117,29 +161,36 @@ export function SocialPostStudio({
       if (active === i) setActive(next[0])
       return
     }
-    setSelected(selected.length < 3 ? [...selected, i] : [...selected.slice(0, 2), i])
+    if (selected.length >= MAX_PHOTOS) return
+    setSelected([...selected, i])
     setActive(i)
   }
 
-  // Live preview
-  useEffect(() => {
-    if (!font || !origin || !images) return
-    let cancelled = false
-    Promise.all([
+  function makeMain(i: number) {
+    setManualPick(true)
+    setSelected([i, ...selected.filter((x) => x !== i)])
+  }
+
+  const draw = useCallback(async (canvas: HTMLCanvasElement, scale: number) => {
+    if (!base || !images) return false
+    const [logo, sellerPhoto] = await Promise.all([
       loadImage(showSeller ? seller?.logo_url : null),
       loadImage(showSeller && !seller?.logo_url ? seller?.profile_photo_url : null),
-    ]).then(([logo, sellerPhoto]) => {
-      if (cancelled || !canvasRef.current) return
-      const chosen = selected
-        .map((i) => (images[i] ? { img: images[i]!, focus: focusMap[i] ?? 0.5 } : null))
-        .filter((p): p is { img: HTMLImageElement; focus: number } => !!p)
-      renderPost(canvasRef.current, vehicle, {
-        format, theme, design, photos: chosen, showPrice, font, contact, site,
-        seller: showSeller && seller ? { name: seller.name, logo, photo: sellerPhoto } : null,
-      })
+    ])
+    renderPost(canvas, vehicle, {
+      ...base,
+      scale,
+      arrangement,
+      photos: chosen.map((i) => ({ img: images[i]!, focus: focusMap[i] ?? 0.5 })),
+      seller: showSeller && seller ? { name: seller.name, logo, photo: sellerPhoto } : null,
     })
-    return () => { cancelled = true }
-  }, [font, origin, images, format, theme, design, selected, focusMap, showPrice, showSeller, contact, site, seller, vehicle])
+    return true
+  }, [base, images, chosen, focusMap, arrangement, showSeller, seller, vehicle])
+
+  // Live preview
+  useEffect(() => {
+    if (canvasRef.current) void draw(canvasRef.current, 1)
+  }, [draw])
 
   const generatedCaption = useMemo(
     () => origin
@@ -152,45 +203,64 @@ export function SocialPostStudio({
   )
   useEffect(() => { if (!captionEdited) setCaption(generatedCaption) }, [generatedCaption, captionEdited])
 
-  function toBlob() {
-    return new Promise<Blob | null>((resolve) => canvasRef.current?.toBlob(resolve, 'image/jpeg', 0.92) ?? resolve(null))
-  }
-  const fileName = `${slug}-${format === 'post' ? 'post' : 'historia'}.jpg`
+  const mime = fileKind === 'png' ? 'image/png' : 'image/jpeg'
+  const fileName = `${slug}-${format === 'story' ? 'historia' : format === 'square' ? 'cuadrado' : 'post'}.${fileKind}`
 
-  async function copyCaption() {
-    try {
-      await navigator.clipboard.writeText(caption)
+  /** Renders a fresh canvas at the export size — the preview stays light */
+  async function exportFile() {
+    const canvas = document.createElement('canvas')
+    if (!(await draw(canvas, quality))) return null
+    const blob = await canvasToBlob(canvas, mime)
+    return blob ? new File([blob], fileName, { type: mime }) : null
+  }
+
+  async function onCopy() {
+    const ok = await copyText(caption)
+    if (ok) {
       setCopied(true)
       window.setTimeout(() => setCopied(false), 1800)
-    } catch {}
+    }
+    return ok
   }
 
-  async function download() {
-    const blob = await toBlob()
-    if (!blob) return
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = fileName
-    a.click()
-    window.setTimeout(() => URL.revokeObjectURL(a.href), 1000)
-  }
-
-  async function share() {
-    setBusy(true)
+  async function onDownload() {
+    setBusy('download')
+    setNotice('')
     try {
-      const blob = await toBlob()
-      if (!blob) return
-      // Instagram ignores shared text, so leave the caption on the clipboard to paste
-      await copyCaption()
-      await navigator.share({ files: [new File([blob], fileName, { type: 'image/jpeg' })], text: caption })
-    } catch {
-      // User closed the share sheet — nothing to do
+      const file = await exportFile()
+      if (!file) { setNotice('No se pudo generar la imagen. Intenta de nuevo.'); return }
+      const href = URL.createObjectURL(file)
+      const a = document.createElement('a')
+      a.href = href
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.setTimeout(() => URL.revokeObjectURL(href), 4000)
+      setNotice(`Listo: ${fileName}`)
     } finally {
-      setBusy(false)
+      setBusy('')
+    }
+  }
+
+  async function onShare() {
+    setBusy('share')
+    setNotice('')
+    try {
+      const file = await exportFile()
+      if (!file) { setNotice('No se pudo generar la imagen. Intenta de nuevo.'); return }
+      // Instagram ignores shared text, so leave the caption on the clipboard to paste
+      await onCopy()
+      await navigator.share({ files: [file] })
+    } catch {
+      // Share sheet closed — nothing to do
+    } finally {
+      setBusy('')
     }
   }
 
   const size = POST_SIZES[format]
+  const ready = !!font && !!images
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,440px)_minmax(0,1fr)] gap-6 lg:gap-10 items-start">
@@ -206,7 +276,9 @@ export function SocialPostStudio({
         >
           <canvas ref={canvasRef} className="block w-full h-full" aria-label="Vista previa de la publicación" />
         </div>
-        <p className="text-[12px] text-text-muted text-center m-0">{size.w} × {size.h} px · {size.hint}</p>
+        <p className="text-[12px] text-text-muted text-center m-0">
+          {size.w * quality} × {size.h * quality} px · {size.hint}
+        </p>
       </div>
 
       {/* Controls */}
@@ -223,23 +295,22 @@ export function SocialPostStudio({
           <Segmented
             value={design}
             onChange={setDesign}
-            options={[{ value: 'framed', label: 'Con marco' }, { value: 'full', label: 'Foto completa' }]}
+            options={(Object.keys(POST_DESIGNS) as PostDesign[]).map((k) => ({ value: k, label: POST_DESIGNS[k].label }))}
           />
-          {design === 'framed' ? (
+          <p className="text-[12px] text-text-muted m-0">{POST_DESIGNS[design].hint}</p>
+          {design !== 'full' && (
             <Segmented
               value={theme}
               onChange={setTheme}
               options={[{ value: 'light', label: 'Claro' }, { value: 'dark', label: 'Oscuro' }]}
             />
-          ) : (
-            <p className="text-[12px] text-text-muted m-0">La foto ocupa toda la imagen y el texto va encima, sobre un degradado.</p>
           )}
         </Section>
 
         {photos.length > 0 ? (
           <Section title="Fotos">
             <p className="text-[12px] text-text-muted m-0 -mt-1">
-              Elige hasta 3. La primera va más grande y el acomodo se ajusta solo para recortar lo menos posible.
+              Toca para agregar o quitar (hasta {MAX_PHOTOS}). El número es el orden; la 1 es la principal.
             </p>
             <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 pt-1">
               {photos.map((src, i) => {
@@ -271,7 +342,10 @@ export function SocialPostStudio({
               })}
             </div>
             <div className="flex items-center justify-between gap-3 flex-wrap text-[12px] text-text-muted">
-              <span>Recomendado para este formato: {suggested} {suggested === 1 ? 'foto' : 'fotos'}</span>
+              <span>
+                Recomendado para este formato: <span className="text-text-base font-[500]">{suggested} {suggested === 1 ? 'foto' : 'fotos'}</span>
+                {' '}· llevas {chosen.length}
+              </span>
               {manualPick && (
                 <button type="button" onClick={() => setManualPick(false)} className="underline underline-offset-2 hover:text-text-base">
                   Usar recomendación
@@ -279,12 +353,34 @@ export function SocialPostStudio({
               )}
             </div>
 
+            {arrangements.length > 1 && frameInfo && (
+              <div className="flex flex-col gap-2 pt-1">
+                <span className="text-[12px] text-text-muted">Acomodo — cambia el tamaño de cada foto</span>
+                <div className="flex gap-2 flex-wrap">
+                  {arrangements.map((a, n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setArrangement(n)}
+                      className="flex flex-col items-center gap-1 p-1.5 rounded-[4px] bg-white"
+                      style={{ border: n === arrangement ? '1.5px solid var(--color-text-base)' : '0.5px solid var(--gray-line-strong)' }}
+                      aria-pressed={n === arrangement}
+                      aria-label={n === 0 ? 'Acomodo recomendado' : `Acomodo ${n + 1}`}
+                    >
+                      <LayoutThumb w={frameInfo.w} h={frameInfo.h} tiles={a.tiles} />
+                      <span className="text-[10.5px] text-text-muted">{n === 0 ? 'Recomendado' : `Opción ${n + 1}`}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col gap-1.5 pt-1">
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
                 <span className="text-[12px] text-text-muted">Encuadre — mueve la foto si el auto queda cortado</span>
-                {selected.length > 1 && (
-                  <div className="flex gap-1 shrink-0">
-                    {selected.map((i, n) => (
+                {chosen.length > 1 && (
+                  <div className="flex gap-1 flex-wrap">
+                    {chosen.map((i, n) => (
                       <button
                         key={i}
                         type="button"
@@ -307,6 +403,16 @@ export function SocialPostStudio({
                 onChange={(e) => setFocusMap((m) => ({ ...m, [active]: Number(e.target.value) }))}
                 className="w-full accent-[var(--color-teal)]"
               />
+              {chosen.length > 1 && chosen[0] !== active && (
+                <button
+                  type="button"
+                  onClick={() => makeMain(active)}
+                  className="self-start inline-flex items-center gap-1.5 text-[12px] text-text-muted hover:text-text-base"
+                >
+                  <Star size={12} />
+                  Hacer esta foto la principal
+                </button>
+              )}
             </div>
           </Section>
         ) : (
@@ -338,33 +444,51 @@ export function SocialPostStudio({
           )}
         </Section>
 
+        <Section title="Archivo">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Segmented
+              value={String(quality) as '1' | '2'}
+              onChange={(v) => setQuality(Number(v) as Quality)}
+              options={[{ value: '1', label: 'Normal · 1080 px' }, { value: '2', label: 'Alta · 2160 px' }]}
+            />
+            <Segmented
+              value={fileKind}
+              onChange={setFileKind}
+              options={[{ value: 'jpg', label: 'JPG' }, { value: 'png', label: 'PNG' }]}
+            />
+          </div>
+          <p className="text-[12px] text-text-muted m-0">
+            JPG pesa menos y es lo que usan Instagram y WhatsApp. PNG conserva todo el detalle.
+          </p>
+        </Section>
+
         <div className="flex flex-col sm:flex-row gap-2.5">
           {canShare && (
             <button
               type="button"
-              onClick={share}
-              disabled={busy || !font}
+              onClick={onShare}
+              disabled={!!busy || !ready}
               className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-[4px] bg-orange text-white text-[14px] font-[500] disabled:opacity-60"
             >
               <Share2 size={16} />
-              Compartir en Instagram o WhatsApp
+              {busy === 'share' ? 'Preparando…' : 'Compartir'}
             </button>
           )}
           <button
             type="button"
-            onClick={download}
-            disabled={!font}
+            onClick={onDownload}
+            disabled={!!busy || !ready}
             className={`inline-flex items-center justify-center gap-2 h-11 px-5 rounded-[4px] text-[14px] font-[500] disabled:opacity-60 ${
               canShare ? 'bg-white text-text-base' : 'bg-orange text-white'
             }`}
             style={canShare ? { border: '0.5px solid var(--gray-line-strong)' } : undefined}
           >
             <Download size={16} />
-            Descargar imagen
+            {busy === 'download' ? 'Generando…' : 'Descargar imagen'}
           </button>
           <button
             type="button"
-            onClick={copyCaption}
+            onClick={() => void onCopy()}
             className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-[4px] bg-white text-text-base text-[14px] font-[500]"
             style={{ border: '0.5px solid var(--gray-line-strong)' }}
           >
@@ -372,13 +496,33 @@ export function SocialPostStudio({
             {copied ? 'Texto copiado' : 'Copiar texto'}
           </button>
         </div>
-        <p className="text-[12px] text-text-muted m-0 leading-relaxed">
-          {canShare
-            ? 'Al compartir, el texto queda copiado: pégalo como descripción en Instagram.'
-            : 'Desde el celular aparece el botón para compartir directo a Instagram o WhatsApp.'}
+        <p className="text-[12px] text-text-muted m-0 leading-relaxed" aria-live="polite">
+          {notice || (canShare
+            ? 'Compartir abre Instagram, WhatsApp y demás apps; el texto queda copiado para pegarlo.'
+            : 'Descarga la imagen y súbela a Instagram, Facebook o tu estado de WhatsApp.')}
         </p>
       </div>
     </div>
+  )
+}
+
+function LayoutThumb({ w, h, tiles }: { w: number; h: number; tiles: { x: number; y: number; w: number; h: number }[] }) {
+  const height = 52
+  return (
+    <svg width={Math.round((height * w) / h)} height={height} viewBox={`0 0 ${w} ${h}`} aria-hidden>
+      <rect width={w} height={h} fill="var(--color-surface-alt)" />
+      {tiles.map((r, i) => (
+        <g key={i}>
+          <rect x={r.x} y={r.y} width={r.w} height={r.h} fill={i === 0 ? 'var(--color-teal)' : 'var(--color-gray-mid)'} />
+          <text
+            x={r.x + r.w / 2} y={r.y + r.h / 2} textAnchor="middle" dominantBaseline="central"
+            fontSize={Math.min(r.w, r.h) * 0.42} fill="white" fontWeight={600}
+          >
+            {i + 1}
+          </text>
+        </g>
+      ))}
+    </svg>
   )
 }
 
@@ -401,7 +545,7 @@ function Segmented<T extends string>({
           key={o.value}
           type="button"
           onClick={() => onChange(o.value)}
-          className="h-9 px-3 rounded-[3px] text-[13px] font-[500] transition-colors"
+          className="h-9 px-2 rounded-[3px] text-[13px] font-[500] transition-colors truncate"
           style={{
             background: value === o.value ? 'white' : 'transparent',
             color: value === o.value ? 'var(--color-text-base)' : 'var(--color-text-muted)',
