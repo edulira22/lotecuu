@@ -203,6 +203,7 @@ export type Database = {
           sort_order: number
           is_cover: boolean
           alt_text: string | null
+          angle: string | null
           created_at: string
         }
         Insert: {
@@ -213,6 +214,7 @@ export type Database = {
           sort_order?: number
           is_cover?: boolean
           alt_text?: string | null
+          angle?: string | null
           created_at?: string
         }
         Update: {
@@ -223,6 +225,7 @@ export type Database = {
           sort_order?: number
           is_cover?: boolean
           alt_text?: string | null
+          angle?: string | null
           created_at?: string
         }
         Relationships: [

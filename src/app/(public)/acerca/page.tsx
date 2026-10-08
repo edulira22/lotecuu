@@ -152,10 +152,9 @@ export default function AcercaPage() {
           <p className="text-[15px] text-white/60 leading-relaxed m-0">
             ¿Tienes preguntas, comentarios o quieres publicar en LoteCUU? Escríbenos directamente.
           </p>
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid gap-4 max-w-[420px]">
             {[
               { name: 'Eduardo Lira', phone: '614 104 4597', wa: '526141044597', email: 'eduardolid20@gmail.com' },
-              { name: 'Ed Meza', phone: '614 156 9330', wa: '526141569330', email: 'edmezanegocios@gmail.com' },
             ].map((c) => (
               <div
                 key={c.email}

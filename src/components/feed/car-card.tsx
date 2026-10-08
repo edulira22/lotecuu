@@ -1,9 +1,7 @@
 import Link from 'next/link'
-import Image from 'next/image'
-import { CarPlaceholder, getPlaceholderTone } from '@/components/ui/car-placeholder'
+import { CardMedia } from './card-media'
 import { StatusPill } from '@/components/ui/status-pill'
 import { FeaturedPill } from '@/components/ui/featured-pill'
-import { Chip } from '@/components/ui/chip'
 import { fmtPrice, fmtKm } from '@/lib/format'
 import { buildWhatsAppLink, vehicleInquiryText } from '@/lib/whatsapp'
 import type { VehicleStatus } from '@/lib/supabase/database.types'
@@ -31,10 +29,11 @@ interface CarCardProps {
 
 export function CarCard({ vehicle: v, wide = false }: CarCardProps) {
   const dimmed = v.status === 'sold'
-  const cover = v.photos?.find((p) => p.is_cover) ?? v.photos?.[0] ?? null
-  const tone = getPlaceholderTone(v.id)
+  const photoUrls = [...(v.photos ?? [])]
+    .sort((a, b) => (a.is_cover === b.is_cover ? a.sort_order - b.sort_order : a.is_cover ? -1 : 1))
+    .map((p) => p.url)
 
-  const chips: string[] = [
+  const specs = [
     v.year ? String(v.year) : null,
     v.mileage ? fmtKm(v.mileage) : null,
     v.transmission ?? null,
@@ -48,58 +47,46 @@ export function CarCard({ vehicle: v, wide = false }: CarCardProps) {
   return (
     <article
       className={[
-        'rounded-card overflow-hidden flex flex-col bg-white border-hairline border-[var(--gray-line)] transition-opacity',
+        'group rounded-[16px] overflow-hidden flex flex-col bg-white border-hairline border-[var(--gray-line)] transition-[box-shadow,border-color,opacity] duration-300 hover:border-[var(--gray-line-strong)] hover:shadow-[0_12px_32px_-12px_rgba(1,37,56,0.18)]',
         dimmed ? 'opacity-60' : '',
         wide ? 'md:col-span-2' : '',
       ]
         .filter(Boolean)
         .join(' ')}
     >
-      <Link href={`/autos/${v.slug}`} className="block relative" style={{ height: wide ? 230 : 168 }}>
-        {cover ? (
-          <Image
-            src={cover.url}
-            alt={v.title}
-            fill
-            className="object-cover"
-            sizes={wide ? '(max-width: 768px) 100vw, 66vw' : '(max-width: 768px) 100vw, 33vw'}
-          />
-        ) : (
-          <CarPlaceholder tone={tone} className="absolute inset-0" />
-        )}
-        <div className="absolute top-2.5 left-2.5 flex gap-1.5">
+      <CardMedia
+        href={`/autos/${v.slug}`}
+        vehicleId={v.id}
+        title={v.title}
+        photoUrls={photoUrls}
+        sizes={wide ? '(max-width: 768px) 100vw, 66vw' : '(max-width: 768px) 100vw, 33vw'}
+        className={wide ? 'aspect-[4/3] md:aspect-auto md:h-[300px]' : 'aspect-[4/3]'}
+      >
+        <div className="absolute top-2.5 left-2.5 flex gap-1.5 z-[1]">
           <StatusPill status={v.status} />
         </div>
         {v.featured && (
-          <div className="absolute top-2.5 right-2.5">
+          <div className="absolute top-2.5 right-2.5 z-[1]">
             <FeaturedPill />
           </div>
         )}
-      </Link>
+      </CardMedia>
 
-      <div className="flex flex-col gap-2 p-3.5 flex-1">
-        <div className="flex flex-col gap-0.5">
-          <Link href={`/autos/${v.slug}`} className="text-[14px] font-[500] leading-snug hover:text-orange transition-colors">
+      <div className="flex flex-col gap-2.5 p-4 flex-1">
+        <div className="flex flex-col gap-1">
+          <Link href={`/autos/${v.slug}`} className="text-[15px] font-[500] leading-snug hover:text-orange transition-colors">
             {v.title}
-            {v.version && (
-              <span className="text-text-muted font-[400]"> · {v.version}</span>
-            )}
+            {v.version && <span className="text-text-muted font-[400]"> · {v.version}</span>}
           </Link>
-          {v.price ? (
-            <div className="text-[18px] font-[500] text-orange tracking-tight">
-              {fmtPrice(v.price)}
-            </div>
-          ) : (
-            <div className="text-[13px] text-text-muted font-[400]">Consultar precio</div>
+          {specs.length > 0 && (
+            <p className="text-[12.5px] text-text-muted m-0 truncate">{specs.join('  ·  ')}</p>
           )}
         </div>
 
-        {chips.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {chips.map((c) => (
-              <Chip key={c}>{c}</Chip>
-            ))}
-          </div>
+        {v.price ? (
+          <div className="text-[19px] font-[500] text-orange tracking-[-0.015em] leading-none">{fmtPrice(v.price)}</div>
+        ) : (
+          <div className="text-[13px] text-text-muted font-[400]">Consultar precio</div>
         )}
 
         <div className="flex-1" />

@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
@@ -8,7 +7,7 @@ import { Logo } from '@/components/ui/logo'
 import { StatusPill } from '@/components/ui/status-pill'
 import { InventoryTabs } from '@/components/seller/inventory-tabs'
 import { Stagger } from '@/components/ui/stagger'
-import { CarPlaceholder, getPlaceholderTone } from '@/components/ui/car-placeholder'
+import { CardMedia } from '@/components/feed/card-media'
 import { fmtPrice, fmtKm } from '@/lib/format'
 import { buildWhatsAppLink } from '@/lib/whatsapp'
 import type { VehicleStatus } from '@/lib/supabase/database.types'
@@ -36,7 +35,7 @@ type VehicleRow = {
   status: VehicleStatus
   slug: string
   featured: boolean
-  coverUrl: string | null
+  photoUrls: string[]
 }
 
 type VehicleRawRow = {
@@ -48,7 +47,7 @@ type VehicleRawRow = {
   status: VehicleStatus
   slug: string
   featured: boolean
-  vehicle_photos: { url: string; is_cover: boolean }[] | null
+  vehicle_photos: { url: string; is_cover: boolean; sort_order: number }[] | null
 }
 
 export async function generateMetadata({
@@ -94,17 +93,18 @@ export default async function VendedorPage({
 
   const { data: vehiclesData } = await supabase
     .from('vehicles')
-    .select('id, title, price, mileage, year, status, slug, featured, vehicle_photos(url, is_cover)')
+    .select('id, title, price, mileage, year, status, slug, featured, vehicle_photos(url, is_cover, sort_order)')
     .eq('seller_id', seller.id)
     .order('featured', { ascending: false })
     .order('created_at', { ascending: false })
 
   const allVehicles = ((vehiclesData ?? []) as unknown as VehicleRawRow[]).map((v) => {
-    const photos = v.vehicle_photos ?? []
-    const cover = photos.find((p) => p.is_cover) ?? photos[0]
+    const photoUrls = [...(v.vehicle_photos ?? [])]
+      .sort((a, b) => (a.is_cover === b.is_cover ? a.sort_order - b.sort_order : a.is_cover ? -1 : 1))
+      .map((p) => p.url)
     return {
       id: v.id, title: v.title, price: v.price, mileage: v.mileage, year: v.year,
-      status: v.status, slug: v.slug, featured: v.featured, coverUrl: cover?.url ?? null,
+      status: v.status, slug: v.slug, featured: v.featured, photoUrls,
     }
   }) as VehicleRow[]
 
@@ -345,43 +345,35 @@ export default async function VendedorPage({
 /* ── Sub-components ──────────────────────────────────────────── */
 
 function SellerVehicleCard({ car }: { car: VehicleRow }) {
-  const tone = getPlaceholderTone(car.id)
   return (
-    <Link
-      href={`/autos/${car.slug}`}
-      className="block rounded-card overflow-hidden border-hairline border-[var(--gray-line)] bg-white hover:border-[var(--gray-line-strong)] transition-colors"
+    <article
+      className="group rounded-[16px] overflow-hidden border-hairline border-[var(--gray-line)] bg-white transition-[box-shadow,border-color] duration-300 hover:border-[var(--gray-line-strong)] hover:shadow-[0_12px_32px_-12px_rgba(1,37,56,0.18)]"
       style={{ opacity: car.status === 'sold' ? 0.6 : 1 }}
     >
-      <div className="relative h-[160px]" style={{ background: '#0E1218' }}>
-        {car.coverUrl ? (
-          <Image
-            src={car.coverUrl}
-            alt={car.title}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 50vw, 260px"
-          />
-        ) : (
-          <CarPlaceholder tone={tone} className="absolute inset-0" />
-        )}
+      <CardMedia
+        href={'/autos/' + car.slug}
+        vehicleId={car.id}
+        title={car.title}
+        photoUrls={car.photoUrls}
+        sizes="(max-width: 768px) 50vw, 260px"
+        className="aspect-[4/3]"
+      >
         <StatusPill status={car.status} className="absolute top-2 left-2 z-[1]" />
-      </div>
-      <div className="p-3 flex flex-col gap-1">
-        <p className="text-[14px] font-[500] leading-snug">{car.title}</p>
+      </CardMedia>
+      <Link href={'/autos/' + car.slug} className="p-3 flex flex-col gap-1">
+        <p className="text-[14px] font-[500] leading-snug m-0">{car.title}</p>
         {car.price ? (
-          <p className="text-[16px] font-[500] text-orange">{fmtPrice(car.price)}</p>
+          <p className="text-[16px] font-[500] text-orange m-0">{fmtPrice(car.price)}</p>
         ) : (
-          <p className="text-[13px] text-text-muted">Consultar precio</p>
+          <p className="text-[13px] text-text-muted m-0">Consultar precio</p>
         )}
-        {(car.year ?? car.mileage) && (
-          <p className="text-[12px] text-text-muted">
-            {[car.year, car.mileage ? fmtKm(car.mileage) : null]
-              .filter(Boolean)
-              .join(' · ')}
+        {(car.year != null || car.mileage != null) && (
+          <p className="text-[12px] text-text-muted m-0">
+            {[car.year, car.mileage ? fmtKm(car.mileage) : null].filter(Boolean).join(' · ')}
           </p>
         )}
-      </div>
-    </Link>
+      </Link>
+    </article>
   )
 }
 
