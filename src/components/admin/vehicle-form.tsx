@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -9,7 +9,14 @@ import { createClient } from '@/lib/supabase/browser'
 import { slugify } from '@/lib/format'
 import { AdminField, inputClass, inputStyle } from './admin-field'
 import { PhotoUploader } from './photo-uploader'
+import { Combobox, type ComboOption } from '@/components/ui/combobox'
+import catalogData from '@/data/vehicle-catalog.json'
 import type { Vehicle, Seller, VehiclePhoto } from '@/lib/supabase/database.types'
+
+/** Brands → models sold in Mexico (INEGI + curated) plus US-market models for legal imports */
+const CATALOG = catalogData as { brand: string; models: { n: string; us?: number }[] }[]
+const normName = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
+const BRAND_OPTIONS: ComboOption[] = CATALOG.map((b) => ({ value: b.brand }))
 
 const schema = z.object({
   seller_id: z.string().uuid('Selecciona un vendedor'),
@@ -71,7 +78,7 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
 
   const YEARS = Array.from({ length: new Date().getFullYear() - 1979 + 2 }, (_, i) => new Date().getFullYear() + 1 - i)
 
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, getValues, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       seller_id: vehicle?.seller_id ?? lockedSellerId ?? '',
@@ -105,6 +112,38 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
   })
 
   const financingOn = watch('financing')
+
+  /* ── Brand → model pickers ── */
+  const brand = watch('brand') ?? ''
+  const model = watch('model') ?? ''
+  const year = watch('year')
+  const brandEntry = useMemo(() => CATALOG.find((b) => normName(b.brand) === normName(brand)), [brand])
+  const modelOptions = useMemo<ComboOption[]>(
+    () => (brandEntry?.models ?? []).map((m) => ({ value: m.n, tag: m.us ? 'EUA' : undefined })),
+    [brandEntry],
+  )
+
+  function changeBrand(v: string) {
+    setValue('brand', v, { shouldDirty: true })
+    const entry = CATALOG.find((b) => normName(b.brand) === normName(v))
+    // A model from another brand makes no sense — clear it
+    if (getValues('model') && !entry?.models.some((m) => normName(m.n) === normName(getValues('model') ?? ''))) {
+      setValue('model', '', { shouldDirty: true })
+    }
+  }
+
+  // Title fills itself ("Nissan Versa 2018") until the user writes their own
+  const autoTitle = useRef('')
+  useEffect(() => {
+    if (isEdit) return
+    const next = [brand, model, year ? String(year) : ''].filter(Boolean).join(' ')
+    const current = getValues('title') ?? ''
+    if (next && (!current || current === autoTitle.current)) {
+      autoTitle.current = next
+      setValue('title', next)
+      setValue('slug', slugify(next))
+    }
+  }, [brand, model, year, isEdit, getValues, setValue])
 
   function friendlyError(message: string) {
     return /financing_details/.test(message)
@@ -265,31 +304,47 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
         <div className="bg-white rounded-[6px] p-4 sm:p-6 flex flex-col gap-5" style={{ border: '0.5px solid var(--gray-line)' }}>
           <div className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">Datos del vehículo</div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <AdminField label="Marca" error={errors.brand?.message}>
+              <Combobox
+                value={brand}
+                onChange={changeBrand}
+                options={BRAND_OPTIONS}
+                placeholder="Escribe: Nissan, Chevrolet…"
+                inputClassName={inputClass}
+                inputStyle={inputStyle}
+              />
+            </AdminField>
+            <AdminField label="Modelo" error={errors.model?.message}>
+              <Combobox
+                value={model}
+                onChange={(v) => setValue('model', v, { shouldDirty: true })}
+                options={modelOptions}
+                placeholder={brandEntry ? `Modelos de ${brandEntry.brand}…` : 'Escribe el modelo'}
+                disabled={!brand}
+                disabledHint="Primero elige la marca"
+                inputClassName={inputClass}
+                inputStyle={inputStyle}
+              />
+            </AdminField>
+            <AdminField label="Versión" error={errors.version?.message}>
+              <input {...register('version')} className={inputClass} style={inputStyle} placeholder="Ej. Advance, TRD Sport" />
+            </AdminField>
+          </div>
+
           <AdminField label="Título *" error={errors.title?.message}>
             <input
               {...register('title')}
               onChange={handleTitleChange}
               className={inputClass}
               style={inputStyle}
-              placeholder="Toyota Hilux 2022 4x4 TRD"
+              placeholder="Se llena solo: Nissan Versa 2018"
             />
           </AdminField>
 
           <AdminField label="Slug (URL)" error={errors.slug?.message}>
-            <input {...register('slug')} className={inputClass} style={inputStyle} placeholder="toyota-hilux-2022-4x4-trd" />
+            <input {...register('slug')} className={inputClass} style={inputStyle} placeholder="nissan-versa-2018" />
           </AdminField>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <AdminField label="Marca" error={errors.brand?.message}>
-              <input {...register('brand')} className={inputClass} style={inputStyle} placeholder="Toyota" />
-            </AdminField>
-            <AdminField label="Modelo" error={errors.model?.message}>
-              <input {...register('model')} className={inputClass} style={inputStyle} placeholder="Hilux" />
-            </AdminField>
-            <AdminField label="Versión" error={errors.version?.message}>
-              <input {...register('version')} className={inputClass} style={inputStyle} placeholder="TRD Sport" />
-            </AdminField>
-          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <AdminField label="Año" error={errors.year?.message}>
