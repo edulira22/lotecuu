@@ -4,7 +4,7 @@ import { Navbar } from '@/components/ui/navbar'
 import { Hero } from '@/components/feed/hero'
 import { FilterBar } from '@/components/feed/filter-bar'
 import { CarCard } from '@/components/feed/car-card'
-import { Logo } from '@/components/ui/logo'
+import { AnimatedLogo } from '@/components/ui/animated-logo'
 import { Stagger } from '@/components/ui/stagger'
 import type { FeedVehicle } from '@/components/feed/car-card'
 import type { VehicleStatus } from '@/lib/supabase/database.types'
@@ -18,6 +18,7 @@ type SearchParams = {
   precio?: string
   anio?: string
   dest?: string
+  fin?: string
   q?: string
   // legacy single-param (kept for back-compat)
   f?: string
@@ -25,7 +26,7 @@ type SearchParams = {
 
 function applyFilter(
   vehicles: FeedVehicle[],
-  { tipo, trans, precio, anio, dest, f, q }: SearchParams,
+  { tipo, trans, precio, anio, dest, fin, f, q }: SearchParams,
 ): FeedVehicle[] {
   let r = vehicles
 
@@ -76,6 +77,9 @@ function applyFilter(
   // Destacados
   if (dest === '1' || f === 'featured') r = r.filter((v) => v.featured)
 
+  // Financiamiento
+  if (fin === '1') r = r.filter((v) => v.financing)
+
   return r
 }
 
@@ -84,13 +88,13 @@ export default async function AutosPage({
 }: {
   searchParams: Promise<SearchParams>
 }) {
-  const { tipo = '', trans = '', precio = '', anio = '', dest = '', f = '', q = '' } = await searchParams
+  const { tipo = '', trans = '', precio = '', anio = '', dest = '', fin = '', f = '', q = '' } = await searchParams
   const supabase = await createClient()
 
   const { data: raw } = await supabase
     .from('vehicles')
     .select(`
-      id, title, version, status, year, price, mileage, transmission, body_type, featured, slug,
+      id, title, version, status, year, price, mileage, transmission, body_type, featured, financing, slug,
       seller:sellers(id, name, whatsapp),
       photos:vehicle_photos(url, is_cover, sort_order)
     `)
@@ -99,7 +103,7 @@ export default async function AutosPage({
     .order('created_at', { ascending: false })
 
   const vehicles = (raw ?? []) as unknown as FeedVehicle[]
-  const filtered = applyFilter(vehicles, { tipo, trans, precio, anio, dest, f, q })
+  const filtered = applyFilter(vehicles, { tipo, trans, precio, anio, dest, fin, f, q })
   const availableCount = vehicles.filter((v) => v.status !== 'sold').length
 
   return (
@@ -108,7 +112,7 @@ export default async function AutosPage({
       <Hero count={availableCount} />
 
       <Suspense>
-        <FilterBar tipo={tipo} trans={trans} precio={precio} anio={anio} dest={dest} />
+        <FilterBar tipo={tipo} trans={trans} precio={precio} anio={anio} dest={dest} fin={fin} />
       </Suspense>
 
       {/* Sort bar */}
@@ -127,7 +131,7 @@ export default async function AutosPage({
           </div>
         ) : (
           <Stagger
-            key={`${tipo}|${trans}|${precio}|${anio}|${dest}|${f}|${q}`}
+            key={`${tipo}|${trans}|${precio}|${anio}|${dest}|${fin}|${f}|${q}`}
             className="grid grid-cols-1 md:grid-cols-3 gap-4"
           >
             {filtered.map((v) => (
@@ -146,7 +150,7 @@ export default async function AutosPage({
         <div className="flex flex-col md:flex-row justify-between gap-6">
           <div>
             <div className="mb-3">
-              <Logo variant="dark" size="sm" href="/" />
+              <AnimatedLogo variant="dark" size="sm" href="/" />
             </div>
             <p className="text-[13px] leading-relaxed max-w-[320px]">
               La vitrina digital de autos usados de Chihuahua. Hecho local, con cariño.

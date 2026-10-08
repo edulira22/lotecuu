@@ -265,7 +265,7 @@ export function PhotoUploader({ vehicleId, initialPhotos = [] }: PhotoUploaderPr
                 type="button"
                 onClick={() => freeInputRef.current?.click()}
                 disabled={busy !== null}
-                className="aspect-[4/3] rounded-[10px] flex flex-col items-center justify-center gap-1.5 text-text-muted hover:text-text-base transition-colors disabled:opacity-60"
+                className="aspect-[4/3] rounded-[4px] flex flex-col items-center justify-center gap-1.5 text-text-muted hover:text-text-base transition-colors disabled:opacity-60"
                 style={{ border: '0.5px dashed var(--gray-line-strong)', background: 'var(--color-surface-alt)' }}
               >
                 <Plus size={16} />
@@ -285,7 +285,7 @@ export function PhotoUploader({ vehicleId, initialPhotos = [] }: PhotoUploaderPr
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => { e.preventDefault(); handleFreeFiles(e.dataTransfer.files) }}
             disabled={busy !== null}
-            className="flex flex-col items-center gap-2 py-8 rounded-[12px] transition-colors cursor-pointer disabled:opacity-60"
+            className="flex flex-col items-center gap-2 py-8 rounded-[6px] transition-colors cursor-pointer disabled:opacity-60"
             style={{ border: '0.5px dashed var(--gray-line-strong)', background: 'var(--color-surface-alt)' }}
           >
             <Upload size={20} className="text-gray-mid" />
@@ -381,7 +381,7 @@ function SlotTile({
         onClick={onPick}
         disabled={busy}
         {...dropProps}
-        className="group relative aspect-[4/3] rounded-[10px] flex flex-col items-center justify-center gap-1 px-2 transition-colors disabled:opacity-60"
+        className="group relative aspect-[4/3] rounded-[4px] flex flex-col items-center justify-center gap-1 px-2 transition-colors disabled:opacity-60"
         style={{
           border: `0.5px dashed ${over ? 'var(--color-orange)' : 'var(--gray-line-strong)'}`,
           background: over ? 'var(--color-orange-soft)' : 'var(--color-surface-alt)',
@@ -396,7 +396,7 @@ function SlotTile({
   }
 
   return (
-    <div {...dropProps} className="group relative aspect-[4/3] rounded-[10px] overflow-hidden" style={{ background: '#0E1218' }}>
+    <div {...dropProps} className="group relative aspect-[4/3] rounded-[4px] overflow-hidden" style={{ background: '#0E1218' }}>
       <Image src={photo.url} alt={label} fill className="object-cover" sizes="(max-width: 640px) 50vw, 220px" />
       <div className="absolute inset-x-0 bottom-0 px-2 py-1.5 text-[10px] font-[500] text-white" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.65), transparent)' }}>
         {label}
@@ -427,7 +427,7 @@ function PhotoTile({
 }) {
   const label = angleLabel(photo.angle)
   return (
-    <div className="group relative aspect-[4/3] rounded-[10px] overflow-hidden" style={{ background: '#0E1218' }}>
+    <div className="group relative aspect-[4/3] rounded-[4px] overflow-hidden" style={{ background: '#0E1218' }}>
       <Image src={photo.url} alt={label ?? ''} fill className="object-cover" sizes="(max-width: 640px) 50vw, 220px" />
       {photo.is_cover && <CoverBadge />}
       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
@@ -456,7 +456,7 @@ function IconBtn({ children, title, onClick, danger }: { children: React.ReactNo
       title={title}
       aria-label={title}
       onClick={onClick}
-      className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${danger ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-white/90 hover:bg-white'}`}
+      className={`w-7 h-7 rounded-[4px] flex items-center justify-center transition-colors ${danger ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-white/90 hover:bg-white'}`}
     >
       {children}
     </button>

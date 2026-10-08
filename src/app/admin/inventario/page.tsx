@@ -46,7 +46,7 @@ export default async function InventarioPage() {
         </Link>
       </div>
 
-      <div className="bg-white rounded-[14px] overflow-hidden" style={{ border: '0.5px solid var(--gray-line)' }}>
+      <div className="bg-white rounded-[6px] overflow-hidden" style={{ border: '0.5px solid var(--gray-line)' }}>
         {/* Header */}
         <div
           className="hidden md:grid text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500] px-5 py-3"
@@ -85,7 +85,7 @@ export default async function InventarioPage() {
               }}
             >
               {/* Thumbnail */}
-              <div className="w-16 h-11 rounded-[6px] overflow-hidden bg-surface-alt shrink-0">
+              <div className="w-16 h-11 rounded-[4px] overflow-hidden bg-surface-alt shrink-0">
                 {cover ? (
                   <Image
                     src={cover.url}

@@ -1,10 +1,10 @@
 import Link from 'next/link'
-import { Logo } from '@/components/ui/logo'
+import { AnimatedLogo } from '@/components/ui/animated-logo'
 
 export function Navbar() {
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between px-5 md:px-10 py-3.5 bg-surface border-b-hairline border-[var(--gray-line)]">
-      <Logo size="md" />
+      <AnimatedLogo size="md" />
       <nav className="hidden md:flex items-center gap-7">
         <Link
           href="/autos"

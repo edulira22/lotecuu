@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
-import { Logo } from '@/components/ui/logo'
+import { AnimatedLogo } from '@/components/ui/animated-logo'
 import { StatusPill } from '@/components/ui/status-pill'
 import { InventoryTabs } from '@/components/seller/inventory-tabs'
 import { Stagger } from '@/components/ui/stagger'
@@ -20,6 +20,8 @@ type SellerRow = {
   whatsapp: string
   phone: string | null
   email: string | null
+  phone2?: string | null
+  whatsapp2?: string | null
   description: string | null
   address: string | null
   google_maps_url: string | null
@@ -139,7 +141,7 @@ export default async function VendedorPage({
           <span className="hidden md:inline">Volver al feed</span>
         </Link>
         <div className="flex-1 flex justify-center">
-          <Logo size="sm" />
+          <AnimatedLogo size="sm" />
         </div>
         <div style={{ width: 80 }} />
       </div>
@@ -166,7 +168,7 @@ export default async function VendedorPage({
         <div className="relative flex flex-col md:flex-row md:items-end gap-4 md:gap-7">
           {/* Logo plate */}
           <div
-            className="inline-flex shrink-0 p-3.5 md:p-5 rounded-[18px]"
+            className="inline-flex shrink-0 p-3.5 md:p-5 rounded-[6px]"
             style={{ background: 'rgba(255,255,255,0.96)', boxShadow: '0 12px 40px rgba(0,0,0,0.18)' }}
           >
             <div className="w-[72px] h-[72px] md:w-24 md:h-24 flex items-center justify-center rounded-xl bg-surface-alt">
@@ -307,6 +309,17 @@ export default async function VendedorPage({
               value={seller.whatsapp}
               href={waLink}
             />
+            {seller.whatsapp2 && (
+              <ContactRow
+                icon="whatsapp"
+                label="WhatsApp alterno"
+                value={seller.whatsapp2}
+                href={buildWhatsAppLink(seller.whatsapp2, `Hola, vi el perfil de ${seller.name} en LoteCUU.`)}
+              />
+            )}
+            {seller.phone2 && (
+              <ContactRow icon="phone" label="Teléfono alterno" value={seller.phone2} href={`tel:${seller.phone2}`} />
+            )}
             {seller.email && (
               <ContactRow icon="mail" label="Correo" value={seller.email} href={`mailto:${seller.email}`} />
             )}
@@ -347,7 +360,7 @@ export default async function VendedorPage({
 function SellerVehicleCard({ car }: { car: VehicleRow }) {
   return (
     <article
-      className="group rounded-[16px] overflow-hidden border-hairline border-[var(--gray-line)] bg-white transition-[box-shadow,border-color] duration-300 hover:border-[var(--gray-line-strong)] hover:shadow-[0_12px_32px_-12px_rgba(1,37,56,0.18)]"
+      className="group rounded-[6px] overflow-hidden border-hairline border-[var(--gray-line)] bg-white transition-[box-shadow,border-color] duration-300 hover:border-[var(--gray-line-strong)] hover:shadow-[0_12px_32px_-12px_rgba(1,37,56,0.18)]"
       style={{ opacity: car.status === 'sold' ? 0.6 : 1 }}
     >
       <CardMedia

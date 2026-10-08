@@ -18,6 +18,8 @@ const schema = z.object({
   business_name: z.string().optional(),
   phone: z.string().regex(/^\d{10}$/, 'Debe ser exactamente 10 dígitos').optional().or(z.literal('')),
   email: z.string().email('Correo inválido').optional().or(z.literal('')),
+  whatsapp2: z.string().regex(/^\d{10}$/, 'Debe ser exactamente 10 dígitos').optional().or(z.literal('')),
+  phone2: z.string().regex(/^\d{10}$/, 'Debe ser exactamente 10 dígitos').optional().or(z.literal('')),
   description: z.string().optional(),
   address: z.string().optional(),
   google_maps_url: z.string().url('URL inválida').optional().or(z.literal('')),
@@ -25,6 +27,12 @@ const schema = z.object({
 })
 
 type FormData = z.infer<typeof schema>
+
+function friendlyError(message: string) {
+  return /phone2|whatsapp2/.test(message)
+    ? 'Para guardar números alternos falta correr la migración 005 en Supabase.'
+    : message
+}
 
 interface SellerFormProps {
   seller?: Seller
@@ -53,6 +61,8 @@ export function SellerForm({ seller, backHref }: SellerFormProps) {
       business_name: seller?.business_name ?? '',
       phone: seller?.phone ?? '',
       email: seller?.email ?? '',
+      whatsapp2: seller?.whatsapp2 ?? '',
+      phone2: seller?.phone2 ?? '',
       description: seller?.description ?? '',
       address: seller?.address ?? '',
       google_maps_url: seller?.google_maps_url ?? '',
@@ -84,6 +94,10 @@ export function SellerForm({ seller, backHref }: SellerFormProps) {
       address: data.address || null,
       google_maps_url: data.google_maps_url || null,
       active: data.active,
+      // Secondary numbers only travel when used, so the form keeps working
+      // even before migration 005 adds these columns
+      ...(data.whatsapp2 || seller?.whatsapp2 ? { whatsapp2: data.whatsapp2 || null } : {}),
+      ...(data.phone2 || seller?.phone2 ? { phone2: data.phone2 || null } : {}),
     }
 
     if (isEdit) {
@@ -91,7 +105,7 @@ export function SellerForm({ seller, backHref }: SellerFormProps) {
         .from('sellers')
         .update(payload)
         .eq('id', seller.id)
-      if (error) { setServerError(error.message); setSaving(false); return }
+      if (error) { setServerError(friendlyError(error.message)); setSaving(false); return }
       router.push(backHref ?? '/admin/vendedores')
       router.refresh()
     } else {
@@ -100,7 +114,7 @@ export function SellerForm({ seller, backHref }: SellerFormProps) {
         .insert(payload)
         .select()
         .single()
-      if (error) { setServerError(error.message); setSaving(false); return }
+      if (error) { setServerError(friendlyError(error.message)); setSaving(false); return }
       setSavedSellerId(created.id)
       setSaving(false)
       return
@@ -156,6 +170,15 @@ export function SellerForm({ seller, backHref }: SellerFormProps) {
             style={inputStyle}
             placeholder="6141234567"
           />
+        </AdminField>
+      </div>
+
+      <div className="grid grid-cols-2 gap-5">
+        <AdminField label="WhatsApp alterno (opcional)" error={errors.whatsapp2?.message}>
+          <input {...register('whatsapp2')} className={inputClass} style={inputStyle} placeholder="6141234567" />
+        </AdminField>
+        <AdminField label="Teléfono alterno (opcional)" error={errors.phone2?.message}>
+          <input {...register('phone2')} className={inputClass} style={inputStyle} placeholder="6141234567" />
         </AdminField>
       </div>
 
@@ -232,7 +255,7 @@ export function SellerForm({ seller, backHref }: SellerFormProps) {
     {/* Foto de perfil — disponible una vez que el vendedor existe */}
     {savedSellerId && (
       <div
-        className="bg-white rounded-[14px] p-6 flex flex-col gap-5 mt-6"
+        className="bg-white rounded-[6px] p-6 flex flex-col gap-5 mt-6"
         style={{ border: '0.5px solid var(--gray-line)' }}
       >
         <div className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">

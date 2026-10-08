@@ -66,7 +66,7 @@ export function CallButton({ phone, className, iconOnly = false }: CallButtonPro
       {/* Desktop popover — shown instead of tel: */}
       {open && (
         <div
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 bg-white rounded-[14px] z-50"
+          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 bg-white rounded-[6px] z-50"
           style={{
             border: '0.5px solid var(--gray-line)',
             boxShadow: '0 8px 32px rgba(0,0,0,0.14)',

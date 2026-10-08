@@ -75,7 +75,7 @@ export function SellerPhotoUploader({
       <p className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">{label}</p>
 
       {url ? (
-        <div className="relative w-24 h-24 rounded-[12px] overflow-hidden group" style={{ border: '0.5px solid var(--gray-line)' }}>
+        <div className="relative w-24 h-24 rounded-[6px] overflow-hidden group" style={{ border: '0.5px solid var(--gray-line)' }}>
           <Image src={url} alt={label} fill className="object-cover" />
           <button
             type="button"
@@ -91,7 +91,7 @@ export function SellerPhotoUploader({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="w-24 h-24 rounded-[12px] flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-colors disabled:opacity-60"
+          className="w-24 h-24 rounded-[6px] flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-colors disabled:opacity-60"
           style={{ border: '0.5px dashed var(--gray-line-strong)', background: 'var(--surface-alt)' }}
         >
           <Upload size={18} className="text-gray-mid" />

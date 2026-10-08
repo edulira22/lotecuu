@@ -124,7 +124,7 @@ function FilterDropdown({ label, options, value, onChange }: DropdownProps) {
         minWidth: 192,
         background: '#fff',
         border: '0.5px solid var(--gray-line)',
-        borderRadius: 12,
+        borderRadius: 6,
         boxShadow: '0 8px 28px rgba(0,0,0,0.12)',
         paddingTop: 6,
         paddingBottom: 6,
@@ -183,9 +183,10 @@ export interface FilterBarProps {
   precio: string
   anio: string
   dest: string
+  fin: string
 }
 
-export function FilterBar({ tipo, trans, precio, anio, dest }: FilterBarProps) {
+export function FilterBar({ tipo, trans, precio, anio, dest, fin }: FilterBarProps) {
   const router = useRouter()
   const params = useSearchParams()
 
@@ -199,7 +200,7 @@ export function FilterBar({ tipo, trans, precio, anio, dest }: FilterBarProps) {
     router.push(qs ? `/autos?${qs}` : '/autos', { scroll: false })
   }
 
-  const hasActive = !!(tipo || trans || precio || anio || dest)
+  const hasActive = !!(tipo || trans || precio || anio || dest || fin)
 
   return (
     <div
@@ -243,6 +244,20 @@ export function FilterBar({ tipo, trans, precio, anio, dest }: FilterBarProps) {
           ].join(' ')}
         >
           ★ Destacados
+        </button>
+
+        {/* Financiamiento toggle */}
+        <button
+          onClick={() => setParam('fin', fin ? '' : '1')}
+          className={[
+            'shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-pill text-[13px] font-[500] transition-all border-hairline cursor-pointer whitespace-nowrap',
+            fin
+              ? 'bg-teal text-white border-teal'
+              : 'bg-teal-soft text-teal border-teal-soft hover:border-teal',
+          ].join(' ')}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></svg>
+          Con financiamiento
         </button>
 
         {/* Clear all */}

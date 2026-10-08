@@ -48,7 +48,7 @@ export function VendorSidebar({ seller }: { seller: Seller }) {
             <Link
               key={href}
               href={href}
-              className="flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] text-[13px] font-[500] transition-colors"
+              className="flex items-center gap-2.5 px-3 py-2.5 rounded-[4px] text-[13px] font-[500] transition-colors"
               style={{
                 background: active ? 'rgba(251,152,51,0.18)' : 'transparent',
                 color: active ? '#FBB96A' : 'rgba(255,255,255,0.75)',
@@ -65,7 +65,7 @@ export function VendorSidebar({ seller }: { seller: Seller }) {
         <form action={signOut}>
           <button
             type="submit"
-            className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-[8px] text-[13px] font-[500]"
+            className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-[4px] text-[13px] font-[500]"
             style={{ color: 'rgba(255,255,255,0.50)' }}
           >
             <LogOut size={15} />

@@ -28,7 +28,7 @@ export default async function CuentasPage() {
       </p>
 
       {sellers.length > 0 && (
-      <div className="bg-white rounded-[14px] overflow-hidden" style={{ border: '0.5px solid var(--gray-line)' }}>
+      <div className="bg-white rounded-[6px] overflow-hidden" style={{ border: '0.5px solid var(--gray-line)' }}>
         <div
           className="grid text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500] px-5 py-3"
           style={{ gridTemplateColumns: '1fr 140px 160px', background: 'var(--color-surface-alt)', borderBottom: '0.5px solid var(--gray-line)' }}

@@ -17,7 +17,7 @@ export function AdminField({ label, error, children }: AdminFieldProps) {
 }
 
 export const inputClass =
-  'w-full px-3 py-2.5 rounded-[8px] text-[14px] bg-white outline-none font-[inherit] transition-colors'
+  'w-full px-3 py-2.5 rounded-[4px] text-[14px] bg-white outline-none font-[inherit] transition-colors'
 
 export const inputStyle = {
   border: '0.5px solid var(--gray-line-strong)',

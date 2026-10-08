@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { CardMedia } from './card-media'
+import { ScrambleValue } from '@/components/ui/scramble-value'
 import { StatusPill } from '@/components/ui/status-pill'
 import { FeaturedPill } from '@/components/ui/featured-pill'
 import { fmtPrice, fmtKm } from '@/lib/format'
@@ -17,6 +18,7 @@ export interface FeedVehicle {
   transmission: string | null
   body_type: string | null
   featured: boolean
+  financing?: boolean | null
   slug: string
   seller: { id: string; name: string; whatsapp: string } | null
   photos: { url: string; is_cover: boolean; sort_order: number }[] | null
@@ -47,7 +49,7 @@ export function CarCard({ vehicle: v, wide = false }: CarCardProps) {
   return (
     <article
       className={[
-        'group rounded-[16px] overflow-hidden flex flex-col bg-white border-hairline border-[var(--gray-line)] transition-[box-shadow,border-color,opacity] duration-300 hover:border-[var(--gray-line-strong)] hover:shadow-[0_12px_32px_-12px_rgba(1,37,56,0.18)]',
+        'group rounded-[6px] overflow-hidden flex flex-col bg-white border-hairline border-[var(--gray-line)] transition-[box-shadow,border-color,opacity] duration-300 hover:border-[var(--gray-line-strong)] hover:shadow-[0_12px_32px_-12px_rgba(1,37,56,0.18)]',
         dimmed ? 'opacity-60' : '',
         wide ? 'md:col-span-2' : '',
       ]
@@ -79,15 +81,23 @@ export function CarCard({ vehicle: v, wide = false }: CarCardProps) {
             {v.version && <span className="text-text-muted font-[400]"> · {v.version}</span>}
           </Link>
           {specs.length > 0 && (
-            <p className="text-[12.5px] text-text-muted m-0 truncate">{specs.join('  ·  ')}</p>
+            <p className="text-[12.5px] text-text-muted m-0 truncate"><ScrambleValue value={specs.join('  ·  ')} delay={120} /></p>
           )}
         </div>
 
-        {v.price ? (
-          <div className="text-[19px] font-[500] text-orange tracking-[-0.015em] leading-none">{fmtPrice(v.price)}</div>
-        ) : (
-          <div className="text-[13px] text-text-muted font-[400]">Consultar precio</div>
-        )}
+        <div className="flex items-center justify-between gap-2">
+          {v.price ? (
+            <ScrambleValue value={fmtPrice(v.price)} className="block text-[19px] font-[500] text-orange tracking-[-0.015em] leading-none" />
+          ) : (
+            <div className="text-[13px] text-text-muted font-[400]">Consultar precio</div>
+          )}
+          {v.financing && (
+            <span className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-[3px] text-[10.5px] font-[500] uppercase tracking-[0.06em] text-teal bg-teal-soft">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></svg>
+              Financiamiento
+            </span>
+          )}
+        </div>
 
         <div className="flex-1" />
         <div className="border-t-hairline border-[var(--gray-line)]" />

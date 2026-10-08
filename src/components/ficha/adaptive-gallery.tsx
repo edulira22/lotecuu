@@ -381,7 +381,7 @@ export function AdaptiveGallery({ photos, vehicleId, vehicleTitle }: AdaptiveGal
   /* ── Render ──────────────────────────────────────────── */
   if (total === 0) {
     return (
-      <div className="relative w-full aspect-[16/10] rounded-[20px] overflow-hidden" style={{ background: '#0E1218' }}>
+      <div className="relative w-full aspect-[16/10] rounded-[8px] overflow-hidden" style={{ background: '#0E1218' }}>
         <CarPlaceholder tone={getPlaceholderTone(vehicleId)} className="absolute inset-0" />
       </div>
     )
@@ -398,7 +398,7 @@ export function AdaptiveGallery({ photos, vehicleId, vehicleTitle }: AdaptiveGal
         {/* Server/first paint: the cover photo alone (keeps LCP fast) */}
         {!ready && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="relative h-full max-w-full rounded-[18px] overflow-hidden" style={{ aspectRatio: '4 / 3' }}>
+            <div className="relative h-full max-w-full rounded-[6px] overflow-hidden" style={{ aspectRatio: '4 / 3' }}>
               <Image src={photos[0].url} alt={vehicleTitle} fill priority sizes={SLIDE_SIZES} className="object-cover" />
             </div>
           </div>
@@ -417,7 +417,7 @@ export function AdaptiveGallery({ photos, vehicleId, vehicleTitle }: AdaptiveGal
               tapSlide.current = s ? Number(s.dataset.slide) : null
             }}
             onClick={() => { if (total < 2) openLightbox(0) }}
-            className="absolute inset-0 overflow-hidden outline-none select-none focus-visible:ring-2 focus-visible:ring-orange/50 rounded-[20px]"
+            className="absolute inset-0 overflow-hidden outline-none select-none focus-visible:ring-2 focus-visible:ring-orange/50 rounded-[8px]"
             style={{ touchAction: 'pan-y' }}
           >
             <div ref={trackRef} className="absolute left-0 top-0 h-full flex items-center will-change-transform" style={{ gap: geo.gap }}>
@@ -434,7 +434,7 @@ export function AdaptiveGallery({ photos, vehicleId, vehicleTitle }: AdaptiveGal
                   >
                     <div
                       ref={(el) => { cardRefs.current[i] = el }}
-                      className="absolute inset-0 rounded-[16px] md:rounded-[20px] overflow-hidden"
+                      className="absolute inset-0 rounded-[6px] md:rounded-[8px] overflow-hidden"
                       style={{
                         background: '#0E1218',
                         opacity: i === 0 ? 1 : 0,
@@ -513,7 +513,7 @@ export function AdaptiveGallery({ photos, vehicleId, vehicleTitle }: AdaptiveGal
                 onClick={() => goTo(i)}
                 aria-label={angleLabel(p.angle) ?? `Foto ${i + 1}`}
                 aria-current={i === index}
-                className="relative shrink-0 h-[44px] md:h-[52px] rounded-[8px] overflow-hidden transition-[opacity,filter] duration-300"
+                className="relative shrink-0 h-[44px] md:h-[52px] rounded-[4px] overflow-hidden transition-[opacity,filter] duration-300"
                 style={{
                   width: `calc(${(ratios[i] ?? DEFAULT_RATIO).toFixed(3)} * ${geo.mobile ? 44 : 52}px)`,
                   background: '#0E1218',
@@ -527,7 +527,7 @@ export function AdaptiveGallery({ photos, vehicleId, vehicleTitle }: AdaptiveGal
             <span
               ref={indicatorRef}
               aria-hidden
-              className="absolute left-0 top-1 rounded-[8px] pointer-events-none"
+              className="absolute left-0 top-1 rounded-[4px] pointer-events-none"
               style={{ boxShadow: 'inset 0 0 0 2px var(--color-orange), 0 0 0 3px rgba(251,152,51,0.18)' }}
             />
           </div>
@@ -574,7 +574,7 @@ function GlassButton({ side, label, onClick, disabled }: { side: 'left' | 'right
       onClick={onClick}
       disabled={disabled}
       aria-label={label}
-      className={`hidden md:flex absolute top-1/2 -translate-y-1/2 ${side === 'left' ? 'left-3' : 'right-3'} z-[2] w-11 h-11 rounded-full items-center justify-center text-white transition-all duration-300 hover:scale-110 disabled:opacity-0 disabled:pointer-events-none`}
+      className={`hidden md:flex absolute top-1/2 -translate-y-1/2 ${side === 'left' ? 'left-3' : 'right-3'} z-[2] w-11 h-11 rounded-[4px] items-center justify-center text-white transition-all duration-300 hover:scale-110 disabled:opacity-0 disabled:pointer-events-none`}
       style={{ background: 'rgba(1,37,56,0.5)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '0.5px solid rgba(255,255,255,0.3)' }}
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -727,7 +727,7 @@ function Lightbox({
         style={{ left: initialRect.left, top: initialRect.top, width: initialRect.width, height: initialRect.height }}
       >
         <div ref={dragTargetRef} className="absolute inset-0 touch-none">
-          <div ref={imgRef} key={index} className="absolute inset-0 rounded-[inherit] overflow-hidden" style={{ borderRadius: 12 }}>
+          <div ref={imgRef} key={index} className="absolute inset-0 rounded-[inherit] overflow-hidden" style={{ borderRadius: 6 }}>
             <Image
               src={photos[index].url}
               alt={photos[index].alt_text ?? (label ? `${title} — ${label}` : title)}
@@ -751,7 +751,7 @@ function Lightbox({
             type="button"
             onClick={() => close()}
             aria-label="Cerrar"
-            className="w-10 h-10 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors"
+            className="w-10 h-10 rounded-[4px] flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -770,7 +770,7 @@ function Lightbox({
                   disabled={disabled}
                   onClick={() => onGo(side === 'left' ? index - 1 : index + 1)}
                   aria-label={side === 'left' ? 'Anterior' : 'Siguiente'}
-                  className={`pointer-events-auto hidden md:flex absolute top-1/2 -translate-y-1/2 ${side === 'left' ? 'left-5' : 'right-5'} w-12 h-12 rounded-full items-center justify-center bg-white/10 hover:bg-white/20 text-white transition-all disabled:opacity-0`}
+                  className={`pointer-events-auto hidden md:flex absolute top-1/2 -translate-y-1/2 ${side === 'left' ? 'left-5' : 'right-5'} w-12 h-12 rounded-[4px] items-center justify-center bg-white/10 hover:bg-white/20 text-white transition-all disabled:opacity-0`}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d={side === 'left' ? 'M15 18l-6-6 6-6' : 'M9 18l6-6-6-6'} />
@@ -785,7 +785,7 @@ function Lightbox({
                   type="button"
                   onClick={() => onGo(i)}
                   aria-label={angleLabel(p.angle) ?? `Foto ${i + 1}`}
-                  className="relative shrink-0 h-[44px] rounded-[6px] overflow-hidden transition-opacity"
+                  className="relative shrink-0 h-[44px] rounded-[4px] overflow-hidden transition-opacity"
                   style={{
                     width: `calc(${(ratios[i] ?? DEFAULT_RATIO).toFixed(3)} * 44px)`,
                     opacity: i === index ? 1 : 0.4,

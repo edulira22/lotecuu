@@ -37,6 +37,7 @@ const schema = z.object({
   negotiable: z.boolean(),
   accepts_trade: z.boolean(),
   financing: z.boolean(),
+  financing_details: z.string().optional(),
   single_owner: z.boolean(),
 })
 
@@ -66,7 +67,7 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
 
   const YEARS = Array.from({ length: new Date().getFullYear() - 1979 + 2 }, (_, i) => new Date().getFullYear() + 1 - i)
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       seller_id: vehicle?.seller_id ?? lockedSellerId ?? '',
@@ -94,9 +95,18 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
       negotiable: vehicle?.negotiable ?? false,
       accepts_trade: vehicle?.accepts_trade ?? false,
       financing: vehicle?.financing ?? false,
+      financing_details: vehicle?.financing_details ?? '',
       single_owner: vehicle?.single_owner ?? false,
     },
   })
+
+  const financingOn = watch('financing')
+
+  function friendlyError(message: string) {
+    return /financing_details/.test(message)
+      ? 'Para guardar los detalles del financiamiento falta correr la migración 005 en Supabase.'
+      : message
+  }
 
   function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const title = e.target.value
@@ -136,11 +146,15 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
       negotiable: data.negotiable,
       accepts_trade: data.accepts_trade,
       financing: data.financing,
+      // Only sent when used, so saving keeps working before migration 005
+      ...(data.financing_details || vehicle?.financing_details
+        ? { financing_details: data.financing ? data.financing_details || null : null }
+        : {}),
     }
 
     if (isEdit) {
       const { error } = await supabase.from('vehicles').update(payload).eq('id', vehicle.id)
-      if (error) { setServerError(error.message); setSaving(false); return }
+      if (error) { setServerError(friendlyError(error.message)); setSaving(false); return }
       router.push(backHref ?? '/admin/inventario')
       router.refresh()
       return
@@ -150,7 +164,7 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
         .insert(payload)
         .select()
         .single()
-      if (error) { setServerError(error.message); setSaving(false); return }
+      if (error) { setServerError(friendlyError(error.message)); setSaving(false); return }
       setSavedVehicleId(created.id)
       setSaving(false)
       return
@@ -164,7 +178,7 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
     <div className="flex flex-col gap-8 max-w-3xl">
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
         {/* Vendedor + estado */}
-        <div className="bg-white rounded-[14px] p-6 flex flex-col gap-5" style={{ border: '0.5px solid var(--gray-line)' }}>
+        <div className="bg-white rounded-[6px] p-6 flex flex-col gap-5" style={{ border: '0.5px solid var(--gray-line)' }}>
           <div className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">Publicación</div>
 
           <div className="grid grid-cols-2 gap-5">
@@ -204,10 +218,22 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
               </label>
             ))}
           </div>
+
+          {financingOn && (
+            <AdminField label="Detalles del financiamiento (opcional)">
+              <textarea
+                {...register('financing_details')}
+                rows={2}
+                className={inputClass}
+                style={{ ...inputStyle, resize: 'vertical' }}
+                placeholder="Ej. Enganche desde 30%, plazos de 12 a 48 meses, con crédito bancario o directo con el lote."
+              />
+            </AdminField>
+          )}
         </div>
 
         {/* Datos del auto */}
-        <div className="bg-white rounded-[14px] p-6 flex flex-col gap-5" style={{ border: '0.5px solid var(--gray-line)' }}>
+        <div className="bg-white rounded-[6px] p-6 flex flex-col gap-5" style={{ border: '0.5px solid var(--gray-line)' }}>
           <div className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">Datos del vehículo</div>
 
           <AdminField label="Título *" error={errors.title?.message}>
@@ -397,7 +423,7 @@ export function VehicleForm({ sellers, vehicle, photos = [], lockedSellerId, bac
 
       {/* Fotos — solo disponibles una vez que el vehículo existe */}
       {savedVehicleId && (
-        <div className="bg-white rounded-[14px] p-6" style={{ border: '0.5px solid var(--gray-line)' }}>
+        <div className="bg-white rounded-[6px] p-6" style={{ border: '0.5px solid var(--gray-line)' }}>
           <div className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500] mb-4">Fotos</div>
           <PhotoUploader vehicleId={savedVehicleId} initialPhotos={photos} />
           {!isEdit && (

@@ -89,7 +89,7 @@ export default function AcercaPage() {
             ].map((step) => (
               <div
                 key={step.num}
-                className="rounded-[14px] p-5 flex flex-col gap-3"
+                className="rounded-[6px] p-5 flex flex-col gap-3"
                 style={{ border: '0.5px solid var(--gray-line)', background: '#fff' }}
               >
                 <span
@@ -107,7 +107,7 @@ export default function AcercaPage() {
 
         {/* Para vendedores */}
         <section
-          className="rounded-[16px] p-6 md:p-8 flex flex-col gap-4"
+          className="rounded-[6px] p-6 md:p-8 flex flex-col gap-4"
           style={{ border: '0.5px solid var(--gray-line)', background: '#fff' }}
         >
           <h2 className="text-[22px] font-[500] m-0 tracking-[-0.015em]">
@@ -143,7 +143,7 @@ export default function AcercaPage() {
         {/* Contacto */}
         <section
           id="contacto"
-          className="rounded-[16px] p-6 md:p-8 flex flex-col gap-4"
+          className="rounded-[6px] p-6 md:p-8 flex flex-col gap-4"
           style={{ background: '#012538', color: '#fff' }}
         >
           <h2 className="text-[22px] font-[500] m-0 tracking-[-0.015em]">
@@ -158,7 +158,7 @@ export default function AcercaPage() {
             ].map((c) => (
               <div
                 key={c.email}
-                className="rounded-[14px] p-5 flex flex-col gap-3"
+                className="rounded-[6px] p-5 flex flex-col gap-3"
                 style={{ border: '0.5px solid rgba(255,255,255,0.14)' }}
               >
                 <span className="text-[14px] font-[500]">{c.name}</span>

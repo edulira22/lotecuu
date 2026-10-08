@@ -36,7 +36,7 @@ export function PlanEditor({ seller }: { seller: Seller }) {
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-[16px] p-6 w-full max-w-sm flex flex-col gap-4" style={{ border: '0.5px solid var(--gray-line)' }}>
+          <div className="bg-white rounded-[6px] p-6 w-full max-w-sm flex flex-col gap-4" style={{ border: '0.5px solid var(--gray-line)' }}>
             <div className="flex items-center justify-between">
               <h2 className="text-[16px] font-[600]">{seller.name}</h2>
               <button onClick={() => setOpen(false)} className="text-text-muted hover:text-text-base">

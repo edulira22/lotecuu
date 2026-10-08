@@ -5,12 +5,13 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { AdaptiveGallery } from '@/components/ficha/adaptive-gallery'
 import { RevealText } from '@/components/ui/reveal-text'
+import { ScrambleValue } from '@/components/ui/scramble-value'
 import { sortPhotos } from '@/lib/photo-angles'
 import { ShareButton } from '@/components/ficha/share-button'
 import { StatusPill } from '@/components/ui/status-pill'
 import { FeaturedPill } from '@/components/ui/featured-pill'
 import { Chip } from '@/components/ui/chip'
-import { Logo } from '@/components/ui/logo'
+import { AnimatedLogo } from '@/components/ui/animated-logo'
 import { CarPlaceholder, getPlaceholderTone } from '@/components/ui/car-placeholder'
 import { fmtPrice, fmtKm, fmtPhone } from '@/lib/format'
 import { buildWhatsAppLink, vehicleInquiryText } from '@/lib/whatsapp'
@@ -25,6 +26,8 @@ type SellerRow = {
   whatsapp: string
   phone: string | null
   email: string | null
+  phone2?: string | null
+  whatsapp2?: string | null
   address: string | null
   google_maps_url: string | null
   slug: string
@@ -57,6 +60,7 @@ type VehicleFull = {
   negotiable: boolean | null
   accepts_trade: boolean | null
   financing: boolean | null
+  financing_details?: string | null
   has_debt: boolean | null
   single_owner: boolean | null
   origin: 'nacional' | 'importado' | null
@@ -117,7 +121,7 @@ function SpecGrid({ vehicle }: { vehicle: VehicleFull }) {
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6">
-      {specs.map((s) => (
+      {specs.map((s, i) => (
         <div
           key={s.label}
           className="flex items-start gap-3 py-3.5 border-b-hairline border-[var(--gray-line)]"
@@ -126,7 +130,7 @@ function SpecGrid({ vehicle }: { vehicle: VehicleFull }) {
             <span className="text-[11px] text-text-muted uppercase tracking-[0.08em] font-[500]">
               {s.label}
             </span>
-            <span className="text-[14px] font-[500]">{s.value}</span>
+            <ScrambleValue value={s.value} delay={i * 60} className="text-[14px] font-[500]" />
           </div>
         </div>
       ))}
@@ -215,25 +219,35 @@ function SellerCard({
       </div>
 
       {/* Contact info — discreet */}
-      {(seller.whatsapp || seller.phone || seller.email) && (
+      {(seller.whatsapp || seller.phone || seller.email || seller.whatsapp2 || seller.phone2) && (
         <div
           className="flex flex-col gap-1 pt-2.5"
           style={{ borderTop: '0.5px solid var(--gray-line)' }}
         >
-          {seller.whatsapp && (
-            <span className="text-[11px] text-text-muted flex items-center gap-1.5">
+          {[seller.whatsapp, seller.whatsapp2].filter(Boolean).map((n) => (
+            <a
+              key={`wa-${n}`}
+              href={buildWhatsAppLink(n!, `Hola, vi a ${seller.name} en LoteCUU.`)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[11px] text-text-muted flex items-center gap-1.5 hover:text-teal transition-colors"
+            >
               <WaIcon size={10} />
-              {fmtPhone(seller.whatsapp)}
-            </span>
-          )}
-          {seller.phone && (
-            <span className="text-[11px] text-text-muted flex items-center gap-1.5">
+              {fmtPhone(n!)}
+            </a>
+          ))}
+          {[seller.phone, seller.phone2].filter(Boolean).map((n) => (
+            <a
+              key={`tel-${n}`}
+              href={`tel:${n!.replace(/\D/g, '')}`}
+              className="text-[11px] text-text-muted flex items-center gap-1.5 hover:text-teal transition-colors"
+            >
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z" />
               </svg>
-              {fmtPhone(seller.phone)}
-            </span>
-          )}
+              {fmtPhone(n!)}
+            </a>
+          ))}
           {seller.email && (
             <a
               href={`mailto:${seller.email}`}
@@ -326,16 +340,52 @@ function KeySpecs({ vehicle: v }: { vehicle: VehicleFull }) {
 
   return (
     <dl className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-8 gap-y-4 lg:gap-x-10 m-0">
-      {items.map((s) => (
+      {items.map((s, i) => (
         <div key={s.label} className="flex flex-col gap-1 min-w-0">
           <dt className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">{s.label}</dt>
           <dd className="m-0 text-[20px] md:text-[24px] font-[500] tracking-[-0.015em] leading-none whitespace-nowrap">
-            {s.value}
+            <ScrambleValue value={s.value} delay={i * 110} />
             {s.unit && <span className="text-[13px] text-text-muted font-[400] ml-1">{s.unit}</span>}
           </dd>
         </div>
       ))}
     </dl>
+  )
+}
+
+/* ── FinancingBlock ──────────────────────────────────────────── */
+function FinancingBlock({ details, askLink }: { details: string | null; askLink: string | null }) {
+  return (
+    <div
+      className="rounded-[6px] p-5 flex flex-col sm:flex-row sm:items-center gap-4"
+      style={{ background: 'var(--color-teal-soft)', borderLeft: '3px solid var(--color-teal)' }}
+    >
+      <div className="flex items-start gap-3 flex-1 min-w-0">
+        <span className="w-9 h-9 shrink-0 rounded-[4px] flex items-center justify-center text-white" style={{ background: 'var(--color-teal)' }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20M6 15h4" />
+          </svg>
+        </span>
+        <div className="flex flex-col gap-1 min-w-0">
+          <span className="text-[15px] font-[500] text-teal">Financiamiento disponible</span>
+          <p className="text-[13px] text-text-base leading-relaxed m-0 whitespace-pre-line">
+            {details || 'Pregunta al vendedor por enganche, plazos y requisitos.'}
+          </p>
+        </div>
+      </div>
+      {askLink && (
+        <a
+          href={askLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-[4px] text-[13px] font-[500] text-white transition-opacity hover:opacity-90"
+          style={{ background: 'var(--color-teal)' }}
+        >
+          <WaIcon size={14} />
+          Preguntar por financiamiento
+        </a>
+      )}
+    </div>
   )
 }
 
@@ -349,13 +399,13 @@ function ContactPanel({
   waLink: string | null
   callLink: string | null
 }) {
-  if (!waLink && !callLink) return null
+  if (!waLink && !callLink && !v.seller?.email) return null
   return (
     <div className="hidden md:flex flex-col gap-3 rounded-xl border-hairline border-[var(--gray-line)] bg-white p-5">
       <span className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">¿Te interesa?</span>
       {v.price ? (
         <div className="flex items-baseline gap-2">
-          <span className="text-[26px] font-[500] text-orange tracking-[-0.02em] leading-none">{fmtPrice(v.price)}</span>
+          <ScrambleValue value={fmtPrice(v.price)} className="text-[26px] font-[500] text-orange tracking-[-0.02em] leading-none" />
           <span className="text-[12px] text-text-muted">MXN</span>
         </div>
       ) : (
@@ -372,11 +422,47 @@ function ContactPanel({
           Contactar al vendedor
         </a>
       )}
-      {callLink && v.seller?.phone && (
-        <CallButton
-          phone={v.seller.phone}
-          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[14px] font-[500] border-hairline border-[var(--gray-line)] text-text-base hover:border-teal hover:text-teal transition-colors"
-        />
+      {(callLink || v.seller?.email) && (
+        <div className="flex gap-2">
+          {callLink && v.seller?.phone && (
+            <CallButton
+              phone={v.seller.phone}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[14px] font-[500] border-hairline border-[var(--gray-line)] text-text-base hover:border-teal hover:text-teal transition-colors"
+            />
+          )}
+          {v.seller?.email && (
+            <a
+              href={`mailto:${v.seller.email}?subject=${encodeURIComponent(`Interés en ${v.title} — LoteCUU`)}`}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[14px] font-[500] border-hairline border-[var(--gray-line)] text-text-base hover:border-teal hover:text-teal transition-colors"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+              Correo
+            </a>
+          )}
+        </div>
+      )}
+      {(v.seller?.whatsapp2 || v.seller?.phone2) && (
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-text-muted">
+          <span>También:</span>
+          {v.seller?.whatsapp2 && (
+            <a
+              href={buildWhatsAppLink(v.seller.whatsapp2, vehicleInquiryText(v.title))}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 hover:text-teal transition-colors"
+            >
+              <WaIcon size={11} /> {fmtPhone(v.seller.whatsapp2)}
+            </a>
+          )}
+          {v.seller?.phone2 && (
+            <a href={`tel:${v.seller.phone2.replace(/\D/g, '')}`} className="hover:text-teal transition-colors">
+              Tel. {fmtPhone(v.seller.phone2)}
+            </a>
+          )}
+        </div>
       )}
       {waLink && (
         <p className="text-[11px] text-text-muted text-center m-0">
@@ -456,7 +542,6 @@ export default async function FichaPage({
   const flags = [
     v.negotiable    && 'Precio negociable',
     v.accepts_trade && 'Acepta cambio',
-    v.financing     && 'Financiamiento disponible',
     v.single_owner  && 'Único dueño',
     v.has_debt      === false && 'Sin adeudo',
     v.has_debt      === true  && 'Con adeudo',
@@ -488,7 +573,7 @@ export default async function FichaPage({
           <span className="hidden md:inline">Volver al catálogo</span>
         </Link>
         <div className="hidden md:flex flex-1 justify-center">
-          <Logo size="sm" />
+          <AnimatedLogo size="sm" />
         </div>
         <div className="flex-1 md:flex-none" />
         <ShareButton title={v.title} price={v.price ? fmtPrice(v.price) : null} />
@@ -522,9 +607,7 @@ export default async function FichaPage({
             <span className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">Precio</span>
             {v.price ? (
               <div className="flex items-baseline gap-2 lg:justify-end mt-1">
-                <span className="text-[30px] md:text-[38px] font-[500] text-orange tracking-[-0.02em] leading-none">
-                  {fmtPrice(v.price)}
-                </span>
+                <ScrambleValue value={fmtPrice(v.price)} delay={250} className="text-[30px] md:text-[38px] font-[500] text-orange tracking-[-0.02em] leading-none" />
                 <span className="text-[13px] text-text-muted">MXN</span>
               </div>
             ) : (
@@ -541,6 +624,20 @@ export default async function FichaPage({
             <div className="flex flex-wrap gap-1.5">
               {flags.map((f) => <Chip key={f}>{f}</Chip>)}
             </div>
+          )}
+
+          {v.financing && (
+            <FinancingBlock
+              details={v.financing_details ?? null}
+              askLink={
+                v.seller?.whatsapp && v.status !== 'sold'
+                  ? buildWhatsAppLink(
+                      v.seller.whatsapp,
+                      `Hola, me interesa el ${v.title} que vi en LoteCUU con financiamiento. ¿Qué opciones de enganche y plazos manejan?`,
+                    )
+                  : null
+              }
+            />
           )}
 
           <div>

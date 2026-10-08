@@ -40,7 +40,7 @@ export default async function DashboardPage() {
           { label: 'Atrasados',        value: atrasado,   color: '#92400e' },
           { label: 'Suspendidos',      value: suspendido, color: '#991b1b' },
         ].map((s) => (
-          <div key={s.label} className="bg-white rounded-[14px] p-5" style={{ border: '0.5px solid var(--gray-line)' }}>
+          <div key={s.label} className="bg-white rounded-[6px] p-5" style={{ border: '0.5px solid var(--gray-line)' }}>
             <div className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500] mb-2">{s.label}</div>
             <div className="text-[32px] font-[600] leading-none" style={{ color: s.color }}>{s.value}</div>
           </div>
@@ -48,7 +48,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Sellers table */}
-      <div className="bg-white rounded-[14px] overflow-hidden" style={{ border: '0.5px solid var(--gray-line)' }}>
+      <div className="bg-white rounded-[6px] overflow-hidden" style={{ border: '0.5px solid var(--gray-line)' }}>
         <div
           className="grid text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500] px-5 py-3"
           style={{ gridTemplateColumns: '1.5fr 80px 80px 80px 140px 1fr 80px', background: 'var(--color-surface-alt)', borderBottom: '0.5px solid var(--gray-line)' }}

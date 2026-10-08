@@ -21,6 +21,8 @@ export type Database = {
           whatsapp: string
           phone: string | null
           email: string | null
+          phone2: string | null
+          whatsapp2: string | null
           logo_url: string | null
           profile_photo_url: string | null
           description: string | null
@@ -43,6 +45,8 @@ export type Database = {
           whatsapp: string
           phone?: string | null
           email?: string | null
+          phone2?: string | null
+          whatsapp2?: string | null
           logo_url?: string | null
           profile_photo_url?: string | null
           description?: string | null
@@ -65,6 +69,8 @@ export type Database = {
           whatsapp?: string
           phone?: string | null
           email?: string | null
+          phone2?: string | null
+          whatsapp2?: string | null
           logo_url?: string | null
           profile_photo_url?: string | null
           description?: string | null
@@ -104,6 +110,7 @@ export type Database = {
           negotiable: boolean | null
           accepts_trade: boolean | null
           financing: boolean | null
+          financing_details: string | null
           has_debt: boolean | null
           single_owner: boolean | null
           origin: 'nacional' | 'importado' | null
@@ -138,6 +145,7 @@ export type Database = {
           negotiable?: boolean | null
           accepts_trade?: boolean | null
           financing?: boolean | null
+          financing_details?: string | null
           has_debt?: boolean | null
           single_owner?: boolean | null
           origin?: 'nacional' | 'importado' | null
@@ -172,6 +180,7 @@ export type Database = {
           negotiable?: boolean | null
           accepts_trade?: boolean | null
           financing?: boolean | null
+          financing_details?: string | null
           has_debt?: boolean | null
           single_owner?: boolean | null
           origin?: 'nacional' | 'importado' | null

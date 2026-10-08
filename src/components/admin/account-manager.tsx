@@ -38,7 +38,7 @@ export function AccountManager({ seller }: { seller: Seller }) {
   if (hasAccount) {
     return (
       <div className="flex flex-col gap-5">
-        <div className="rounded-[14px] p-5 flex flex-col gap-3" style={{ background: '#f0fdf4', border: '0.5px solid #bbf7d0' }}>
+        <div className="rounded-[6px] p-5 flex flex-col gap-3" style={{ background: '#f0fdf4', border: '0.5px solid #bbf7d0' }}>
           <div className="flex items-center gap-2">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2">
               <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
@@ -59,7 +59,7 @@ export function AccountManager({ seller }: { seller: Seller }) {
             Revocar acceso
           </button>
         ) : (
-          <div className="rounded-[14px] p-4 flex flex-col gap-3" style={{ background: '#fef2f2', border: '0.5px solid #fecaca' }}>
+          <div className="rounded-[6px] p-4 flex flex-col gap-3" style={{ background: '#fef2f2', border: '0.5px solid #fecaca' }}>
             <p className="text-[13px] text-red-700">¿Confirmas eliminar la cuenta? El vendedor perderá acceso al portal.</p>
             <div className="flex gap-2">
               <button onClick={handleDelete} disabled={saving}
@@ -80,7 +80,7 @@ export function AccountManager({ seller }: { seller: Seller }) {
 
   return (
     <form onSubmit={handleCreate} className="flex flex-col gap-4">
-      <div className="rounded-[14px] p-4 text-[13px]" style={{ background: 'var(--color-surface-alt)', border: '0.5px solid var(--gray-line)' }}>
+      <div className="rounded-[6px] p-4 text-[13px]" style={{ background: 'var(--color-surface-alt)', border: '0.5px solid var(--gray-line)' }}>
         Este vendedor aún no tiene cuenta. Crea sus credenciales de acceso abajo.
       </div>
 
