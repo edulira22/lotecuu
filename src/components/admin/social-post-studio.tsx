@@ -5,8 +5,8 @@ import Image from 'next/image'
 import { Copy, Download, Share2, Check } from 'lucide-react'
 import { fmtPhone } from '@/lib/format'
 import {
-  POST_SIZES, buildCaption, renderPost,
-  type PostFormat, type PostTheme, type PostVehicle,
+  POST_SIZES, buildCaption, renderPost, suggestPhotoCount,
+  type PostDesign, type PostFormat, type PostTheme, type PostVehicle,
 } from '@/lib/social-post'
 
 export interface StudioSeller {
@@ -57,8 +57,13 @@ export function SocialPostStudio({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [format, setFormat] = useState<PostFormat>('post')
   const [theme, setTheme] = useState<PostTheme>('light')
-  const [photoIdx, setPhotoIdx] = useState(0)
-  const [focus, setFocus] = useState(0.5)
+  const [design, setDesign] = useState<PostDesign>('framed')
+  const [images, setImages] = useState<(HTMLImageElement | null)[] | null>(null)
+  /** Indices into `photos`, in mosaic order (first = largest tile) */
+  const [selected, setSelected] = useState<number[]>([0])
+  const [manualPick, setManualPick] = useState(false)
+  const [active, setActive] = useState(0)
+  const [focusMap, setFocusMap] = useState<Record<number, number>>({})
   const [showPrice, setShowPrice] = useState(!!vehicle.price)
   const [showSeller, setShowSeller] = useState(!!seller)
   const [showContact, setShowContact] = useState(false)
@@ -84,23 +89,57 @@ export function SocialPostStudio({
     } catch { setCanShare(false) }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+    Promise.all(photos.map((p) => loadImage(p))).then((imgs) => { if (!cancelled) setImages(imgs) })
+    return () => { cancelled = true }
+  }, [photos])
+
+  // How many photos suit this format, from their proportions (until the user picks by hand)
+  const usable = useMemo(() => (images ?? []).map((img, i) => (img ? i : -1)).filter((i) => i >= 0), [images])
+  const suggested = useMemo(() => {
+    if (!images || !usable.length) return 1
+    const aspects = usable.map((i) => images[i]!.naturalWidth / images[i]!.naturalHeight)
+    return suggestPhotoCount(format, design, aspects)
+  }, [images, usable, format, design])
+  useEffect(() => {
+    if (manualPick || !usable.length) return
+    setSelected(usable.slice(0, suggested))
+    setActive(usable[0])
+  }, [manualPick, suggested, usable])
+
+  function togglePhoto(i: number) {
+    setManualPick(true)
+    if (selected.includes(i)) {
+      if (selected.length === 1) return
+      const next = selected.filter((x) => x !== i)
+      setSelected(next)
+      if (active === i) setActive(next[0])
+      return
+    }
+    setSelected(selected.length < 3 ? [...selected, i] : [...selected.slice(0, 2), i])
+    setActive(i)
+  }
+
   // Live preview
   useEffect(() => {
-    if (!font || !origin) return
+    if (!font || !origin || !images) return
     let cancelled = false
     Promise.all([
-      loadImage(photos[photoIdx]),
       loadImage(showSeller ? seller?.logo_url : null),
       loadImage(showSeller && !seller?.logo_url ? seller?.profile_photo_url : null),
-    ]).then(([photo, logo, sellerPhoto]) => {
+    ]).then(([logo, sellerPhoto]) => {
       if (cancelled || !canvasRef.current) return
+      const chosen = selected
+        .map((i) => (images[i] ? { img: images[i]!, focus: focusMap[i] ?? 0.5 } : null))
+        .filter((p): p is { img: HTMLImageElement; focus: number } => !!p)
       renderPost(canvasRef.current, vehicle, {
-        format, theme, photo, focus, showPrice, font, contact, site,
+        format, theme, design, photos: chosen, showPrice, font, contact, site,
         seller: showSeller && seller ? { name: seller.name, logo, photo: sellerPhoto } : null,
       })
     })
     return () => { cancelled = true }
-  }, [font, origin, format, theme, photoIdx, focus, showPrice, showSeller, contact, site, photos, seller, vehicle])
+  }, [font, origin, images, format, theme, design, selected, focusMap, showPrice, showSeller, contact, site, seller, vehicle])
 
   const generatedCaption = useMemo(
     () => origin
@@ -175,44 +214,100 @@ export function SocialPostStudio({
         <Section title="Formato">
           <Segmented
             value={format}
-            onChange={(v) => { setFormat(v); setFocus(0.5) }}
+            onChange={setFormat}
             options={(Object.keys(POST_SIZES) as PostFormat[]).map((k) => ({ value: k, label: POST_SIZES[k].label }))}
-          />
-          <Segmented
-            value={theme}
-            onChange={setTheme}
-            options={[{ value: 'light', label: 'Claro' }, { value: 'dark', label: 'Oscuro' }]}
           />
         </Section>
 
+        <Section title="Diseño">
+          <Segmented
+            value={design}
+            onChange={setDesign}
+            options={[{ value: 'framed', label: 'Con marco' }, { value: 'full', label: 'Foto completa' }]}
+          />
+          {design === 'framed' ? (
+            <Segmented
+              value={theme}
+              onChange={setTheme}
+              options={[{ value: 'light', label: 'Claro' }, { value: 'dark', label: 'Oscuro' }]}
+            />
+          ) : (
+            <p className="text-[12px] text-text-muted m-0">La foto ocupa toda la imagen y el texto va encima, sobre un degradado.</p>
+          )}
+        </Section>
+
         {photos.length > 0 ? (
-          <Section title="Foto">
-            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-              {photos.map((src, i) => (
-                <button
-                  key={src}
-                  type="button"
-                  onClick={() => { setPhotoIdx(i); setFocus(0.5) }}
-                  className="relative shrink-0 w-[76px] h-[56px] overflow-hidden rounded-[4px] transition-opacity"
-                  style={{
-                    outline: i === photoIdx ? '2px solid var(--color-orange)' : '0.5px solid var(--gray-line-strong)',
-                    outlineOffset: i === photoIdx ? 1 : 0,
-                    opacity: i === photoIdx ? 1 : 0.72,
-                  }}
-                  aria-label={`Usar foto ${i + 1}`}
-                >
-                  <Image src={src} alt="" fill sizes="76px" className="object-cover" />
-                </button>
-              ))}
+          <Section title="Fotos">
+            <p className="text-[12px] text-text-muted m-0 -mt-1">
+              Elige hasta 3. La primera va más grande y el acomodo se ajusta solo para recortar lo menos posible.
+            </p>
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 pt-1">
+              {photos.map((src, i) => {
+                const order = selected.indexOf(i)
+                const on = order >= 0
+                return (
+                  <button
+                    key={src}
+                    type="button"
+                    onClick={() => togglePhoto(i)}
+                    disabled={images !== null && !images[i]}
+                    className="relative shrink-0 w-[76px] h-[56px] overflow-hidden rounded-[4px] transition-opacity disabled:opacity-30"
+                    style={{
+                      outline: on ? '2px solid var(--color-orange)' : '0.5px solid var(--gray-line-strong)',
+                      outlineOffset: on ? 1 : 0,
+                      opacity: on ? 1 : 0.7,
+                    }}
+                    aria-pressed={on}
+                    aria-label={on ? `Quitar foto ${i + 1}` : `Agregar foto ${i + 1}`}
+                  >
+                    <Image src={src} alt="" fill sizes="76px" className="object-cover" />
+                    {on && (
+                      <span className="absolute top-1 left-1 w-5 h-5 rounded-[3px] bg-orange text-white text-[11px] font-[600] flex items-center justify-center">
+                        {order + 1}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
             </div>
-            <label className="flex flex-col gap-1.5">
-              <span className="text-[12px] text-text-muted">Encuadre — mueve la foto si el auto queda cortado</span>
+            <div className="flex items-center justify-between gap-3 flex-wrap text-[12px] text-text-muted">
+              <span>Recomendado para este formato: {suggested} {suggested === 1 ? 'foto' : 'fotos'}</span>
+              {manualPick && (
+                <button type="button" onClick={() => setManualPick(false)} className="underline underline-offset-2 hover:text-text-base">
+                  Usar recomendación
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1.5 pt-1">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[12px] text-text-muted">Encuadre — mueve la foto si el auto queda cortado</span>
+                {selected.length > 1 && (
+                  <div className="flex gap-1 shrink-0">
+                    {selected.map((i, n) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setActive(i)}
+                        className="h-6 min-w-6 px-1.5 rounded-[3px] text-[11px] font-[500]"
+                        style={{
+                          background: active === i ? 'var(--color-text-base)' : 'var(--color-surface-alt)',
+                          color: active === i ? 'white' : 'var(--color-text-muted)',
+                        }}
+                        aria-label={`Encuadre de la foto ${n + 1}`}
+                      >
+                        {n + 1}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <input
-                type="range" min={0} max={1} step={0.01} value={focus}
-                onChange={(e) => setFocus(Number(e.target.value))}
+                type="range" min={0} max={1} step={0.01} value={focusMap[active] ?? 0.5}
+                onChange={(e) => setFocusMap((m) => ({ ...m, [active]: Number(e.target.value) }))}
                 className="w-full accent-[var(--color-teal)]"
               />
-            </label>
+            </div>
           </Section>
         ) : (
           <p className="text-[13px] text-text-muted m-0">Este auto no tiene fotos todavía. Súbelas para que la publicación luzca.</p>
