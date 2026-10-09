@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { CardMedia } from './card-media'
-import { ScrambleValue } from '@/components/ui/scramble-value'
 import { StatusPill } from '@/components/ui/status-pill'
 import { FeaturedPill } from '@/components/ui/featured-pill'
 import { fmtPrice, fmtKm } from '@/lib/format'
@@ -81,13 +80,13 @@ export function CarCard({ vehicle: v, wide = false }: CarCardProps) {
             {v.version && <span className="text-text-muted font-[400]"> · {v.version}</span>}
           </Link>
           {specs.length > 0 && (
-            <p className="text-[12.5px] text-text-muted m-0 truncate"><ScrambleValue value={specs.join('  ·  ')} delay={120} /></p>
+            <p className="text-[12.5px] text-text-muted m-0 truncate">{specs.join('  ·  ')}</p>
           )}
         </div>
 
         <div className="flex items-center justify-between gap-2">
           {v.price ? (
-            <ScrambleValue value={fmtPrice(v.price)} className="block text-[19px] font-[500] text-orange tracking-[-0.015em] leading-none" />
+            <span className="block text-[19px] font-[500] text-orange tracking-[-0.015em] leading-none tabular-nums">{fmtPrice(v.price)}</span>
           ) : (
             <div className="text-[13px] text-text-muted font-[400]">Consultar precio</div>
           )}

@@ -5,7 +5,6 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { AdaptiveGallery } from '@/components/ficha/adaptive-gallery'
 import { RevealText } from '@/components/ui/reveal-text'
-import { ScrambleValue } from '@/components/ui/scramble-value'
 import { SellerMark } from '@/components/ui/seller-mark'
 import { sortPhotos } from '@/lib/photo-angles'
 import { ShareButton } from '@/components/ficha/share-button'
@@ -124,7 +123,7 @@ function SpecGrid({ vehicle }: { vehicle: VehicleFull }) {
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6">
-      {specs.map((s, i) => (
+      {specs.map((s) => (
         <div
           key={s.label}
           className="flex items-start gap-3 py-3.5 border-b-hairline border-[var(--gray-line)]"
@@ -133,7 +132,7 @@ function SpecGrid({ vehicle }: { vehicle: VehicleFull }) {
             <span className="text-[11px] text-text-muted uppercase tracking-[0.08em] font-[500]">
               {s.label}
             </span>
-            <ScrambleValue value={s.value} delay={i * 60} className="text-[14px] font-[500]" />
+            <span className="text-[14px] font-[500] tabular-nums">{s.value}</span>
           </div>
         </div>
       ))}
@@ -354,11 +353,11 @@ function KeySpecs({ vehicle: v }: { vehicle: VehicleFull }) {
 
   return (
     <dl className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-8 gap-y-4 lg:gap-x-10 m-0">
-      {items.map((s, i) => (
+      {items.map((s) => (
         <div key={s.label} className="flex flex-col gap-1 min-w-0">
           <dt className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">{s.label}</dt>
           <dd className="m-0 text-[20px] md:text-[24px] font-[500] tracking-[-0.015em] leading-none whitespace-nowrap">
-            <ScrambleValue value={s.value} delay={i * 110} />
+            <span className="tabular-nums">{s.value}</span>
             {s.unit && <span className="text-[13px] text-text-muted font-[400] ml-1">{s.unit}</span>}
           </dd>
         </div>
@@ -419,7 +418,7 @@ function ContactPanel({
       <span className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">¿Te interesa?</span>
       {v.price ? (
         <div className="flex items-baseline gap-2">
-          <ScrambleValue value={fmtPrice(v.price)} className="text-[26px] font-[500] text-orange tracking-[-0.02em] leading-none" />
+          <span className="text-[26px] font-[500] text-orange tracking-[-0.02em] leading-none tabular-nums">{fmtPrice(v.price)}</span>
           <span className="text-[12px] text-text-muted">MXN</span>
         </div>
       ) : (
@@ -622,7 +621,7 @@ export default async function FichaPage({
             <span className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">Precio</span>
             {v.price ? (
               <div className="flex items-baseline gap-2 lg:justify-end mt-1">
-                <ScrambleValue value={fmtPrice(v.price)} delay={250} className="text-[30px] md:text-[38px] font-[500] text-orange tracking-[-0.02em] leading-none" />
+                <span className="text-[30px] md:text-[38px] font-[500] text-orange tracking-[-0.02em] leading-none tabular-nums">{fmtPrice(v.price)}</span>
                 <span className="text-[13px] text-text-muted">MXN</span>
               </div>
             ) : (

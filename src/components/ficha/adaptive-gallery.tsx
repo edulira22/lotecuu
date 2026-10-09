@@ -8,7 +8,6 @@ import {
   createAnimatable,
   createDraggable,
   createSpring,
-  scrambleText,
   stagger,
 } from 'animejs'
 import type { AnimatableObject, Draggable, JSAnimation } from 'animejs'
@@ -65,7 +64,7 @@ type Geometry = ReturnType<typeof computeGeometry>
  * Photo gallery that adapts to each photo instead of forcing a frame:
  * slides keep their real proportions, the stage height springs to fit the
  * active photo, and the strip is physically draggable (throw + spring snap)
- * with depth and parallax. Labels/counters scramble in, a magnetic cursor
+ * with depth and parallax. A magnetic cursor
  * follows the pointer on desktop, and the fullscreen view flies out of the
  * photo itself (drag down to close).
  */
@@ -277,22 +276,15 @@ export function AdaptiveGallery({ photos, vehicleId, vehicleTitle }: AdaptiveGal
     })
   }, [index, geo, ready, paint])
 
-  /* ── Scrambled pose label + counter ──────────────────── */
+  /* ── Pose label + counter ────────────────────────────── */
   useEffect(() => {
     const label = angleLabel(photos[index]?.angle)
     const counter = `${pad(index + 1)} / ${pad(total)}`
-    const motion = !reducedMotion()
     if (labelChipRef.current) {
       labelChipRef.current.style.display = label ? '' : 'none'
     }
-    if (labelRef.current && label) {
-      if (motion) animate(labelRef.current, { innerHTML: scrambleText({ text: label, chars: 'a-zA-Z', cursor: '▍' }) })
-      else labelRef.current.textContent = label
-    }
-    if (counterRef.current) {
-      if (motion) animate(counterRef.current, { innerHTML: scrambleText({ text: counter, chars: '0-9', settleDuration: 220 }) })
-      else counterRef.current.textContent = counter
-    }
+    if (labelRef.current && label) labelRef.current.textContent = label
+    if (counterRef.current) counterRef.current.textContent = counter
   }, [index, total, photos, ready])
 
   /* ── Minimap indicator glides to the active thumb ────── */
@@ -344,7 +336,7 @@ export function AdaptiveGallery({ photos, vehicleId, vehicleTitle }: AdaptiveGal
     const setText = (t: string) => {
       if (t === lastText || !cursorTextRef.current) return
       lastText = t
-      animate(cursorTextRef.current, { innerHTML: scrambleText({ text: t, chars: 'a-z', settleDuration: 160 }) })
+      cursorTextRef.current.textContent = t
     }
     const onMove = (e: PointerEvent) => {
       if (e.pointerType !== 'mouse') return
