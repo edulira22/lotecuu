@@ -7,8 +7,8 @@ import { EMBLEM_DOT, EMBLEM_SLASHES, EMBLEM_TRIANGLE, EMBLEM_VIEWBOX, LOGO_COLOR
 
 const VB_W = 2700
 const VB_H = 1362
-/** How far (viewBox units) the dot may travel toward the pointer */
-const DOT_REACH = 520
+/** How far (viewBox units) the dot may travel toward the pointer — the leg is ~273 away, so this keeps a wide margin */
+const DOT_REACH = 120
 
 /**
  * The emblem's signature intro: the teal leg draws itself and fills, the

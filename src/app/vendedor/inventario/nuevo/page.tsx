@@ -24,7 +24,7 @@ export default async function VendorNuevoPage() {
     .eq('seller_id', seller.id)
     .in('status', ['published', 'reserved', 'hidden', 'draft'])
 
-  if ((count ?? 0) >= seller.max_vehicles) redirect('/vendedor/inventario')
+  if ((count ?? 0) >= seller.max_vehicles) redirect('/vendedor/plan')
 
   const { count: featuredUsed } = await supabase
     .from('vehicles')

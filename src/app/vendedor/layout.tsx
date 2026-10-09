@@ -1,23 +1,8 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
 import { VendorSidebar } from '@/components/vendor/sidebar'
-import type { Seller } from '@/lib/supabase/database.types'
+import { ACTIVE_STATUSES, requireSeller } from '@/lib/supabase/current-seller'
 
 export default async function VendedorLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) redirect('/login')
-
-  const { data: sellerData } = await supabase
-    .from('sellers')
-    .select('*')
-    .eq('auth_user_id', user.id)
-    .maybeSingle()
-
-  if (!sellerData) redirect('/admin/inventario')
-
-  const seller = sellerData as unknown as Seller
+  const { supabase, seller } = await requireSeller()
 
   if (seller.payment_status === 'suspendido') {
     return (
@@ -44,9 +29,16 @@ export default async function VendedorLayout({ children }: { children: React.Rea
     )
   }
 
+  const { count } = await supabase
+    .from('vehicles')
+    .select('id', { count: 'exact', head: true })
+    .eq('seller_id', seller.id)
+    .in('status', [...ACTIVE_STATUSES])
+  const canAdd = (count ?? 0) < seller.max_vehicles
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen" style={{ background: '#F4F2EC' }}>
-      <VendorSidebar seller={seller} />
+      <VendorSidebar seller={seller} canAdd={canAdd} />
       {/* pb leaves room for the phone tab bar */}
       <main className="flex-1 min-w-0 pb-[calc(76px+env(safe-area-inset-bottom))] md:pb-0">{children}</main>
     </div>

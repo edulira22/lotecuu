@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, ImagePlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { VehicleForm } from '@/components/admin/vehicle-form'
 import { VehicleLedger } from '@/components/admin/vehicle-ledger'
@@ -42,7 +42,17 @@ export default async function VendorEditarPage({ params }: { params: Promise<{ i
           <ChevronLeft size={14} />
           Mis autos
         </Link>
-        <h1 className="text-[22px] md:text-[28px] font-[600] tracking-tight m-0">Editar: {vehicle.title}</h1>
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <h1 className="text-[22px] md:text-[28px] font-[600] tracking-tight m-0 min-w-0">Editar: {vehicle.title}</h1>
+          <Link
+            href={`/vendedor/redes/${vehicle.id}`}
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-[4px] bg-white text-[13px] font-[500] hover:bg-surface-alt transition-colors shrink-0"
+            style={{ border: '0.5px solid var(--gray-line-strong)' }}
+          >
+            <ImagePlus size={15} />
+            Crear post para redes
+          </Link>
+        </div>
       </div>
       <VehicleForm
         sellers={[seller]}

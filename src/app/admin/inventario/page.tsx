@@ -152,7 +152,7 @@ export default async function InventarioPage() {
               {/* Edit */}
               <div className="flex justify-end gap-1.5">
                 <Link
-                  href={`/admin/inventario/${v.id}/redes`}
+                  href={`/admin/redes/${v.id}`}
                   title="Crear post para redes"
                   aria-label="Crear post para redes"
                   className="inline-flex items-center justify-center h-8 w-8 rounded-pill transition-colors hover:bg-surface-alt"

@@ -1,13 +1,17 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { Plus, Pencil, FileText, Star } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import Image from 'next/image'
+import { subDays } from 'date-fns'
+import { Plus, Pencil, Star, Camera, Eye, ImagePlus } from 'lucide-react'
+import { ACTIVE_STATUSES, requireSeller } from '@/lib/supabase/current-seller'
 import { StatusPill } from '@/components/ui/status-pill'
+import { CarPlaceholder } from '@/components/ui/car-placeholder'
+import { sortPhotos } from '@/lib/photo-angles'
 import { fmtPrice, fmtKm } from '@/lib/format'
-import type { Seller, VehiclePrivate, VehicleStatus } from '@/lib/supabase/database.types'
+import type { VehicleStatus } from '@/lib/supabase/database.types'
 
 export const metadata = { title: 'Mis autos — LoteCUU' }
 
+type Photo = { url: string; is_cover: boolean; sort_order: number; angle: string | null }
 type Row = {
   id: string
   title: string
@@ -17,11 +21,13 @@ type Row = {
   mileage: number | null
   slug: string
   featured: boolean
+  photos: Photo[]
 }
 
 const VIEWS = [
   { key: 'todos', label: 'Todos' },
   { key: 'venta', label: 'En venta' },
+  { key: 'borradores', label: 'Borradores' },
   { key: 'vendidos', label: 'Vendidos' },
 ] as const
 
@@ -31,65 +37,42 @@ export default async function VendorInventarioPage({
   searchParams: Promise<{ vista?: string }>
 }) {
   const { vista = 'todos' } = await searchParams
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const { data: sellerData } = await supabase
-    .from('sellers').select('*').eq('auth_user_id', user.id).maybeSingle()
-  if (!sellerData) redirect('/login')
-  const seller = sellerData as unknown as Seller
+  const { supabase, seller } = await requireSeller()
 
   const { data: vehicles } = await supabase
     .from('vehicles')
-    .select('id, title, status, year, price, mileage, slug, featured')
+    .select('id, title, status, year, price, mileage, slug, featured, photos:vehicle_photos(url, is_cover, sort_order, angle)')
     .eq('seller_id', seller.id)
     .order('created_at', { ascending: false })
-
-  const all = (vehicles ?? []) as Row[]
+  const all = (vehicles ?? []) as unknown as Row[]
   const ids = all.map((v) => v.id)
 
-  // Private numbers + document counts (tables from migration 006 — optional)
-  const [privRes, docsRes] = ids.length
-    ? await Promise.all([
-        supabase.from('vehicle_private').select('*').in('vehicle_id', ids),
-        supabase.from('vehicle_documents').select('vehicle_id').in('vehicle_id', ids),
-      ])
-    : [{ data: [], error: null }, { data: [], error: null }]
-  const toolsReady = !privRes.error && !docsRes.error
-  const priv = new Map<string, VehiclePrivate>(((privRes.data ?? []) as VehiclePrivate[]).map((p) => [p.vehicle_id, p]))
-  const docCount = new Map<string, number>()
-  for (const d of (docsRes.data ?? []) as { vehicle_id: string }[]) {
-    docCount.set(d.vehicle_id, (docCount.get(d.vehicle_id) ?? 0) + 1)
-  }
+  const { data: events } = ids.length
+    ? await supabase
+        .from('vehicle_events')
+        .select('vehicle_id')
+        .in('vehicle_id', ids)
+        .eq('event_type', 'view')
+        .gte('created_at', subDays(new Date(), 30).toISOString())
+        .limit(10000)
+    : { data: [] }
+  const views = new Map<string, number>()
+  for (const e of (events ?? []) as { vehicle_id: string }[]) views.set(e.vehicle_id, (views.get(e.vehicle_id) ?? 0) + 1)
 
-  const cost = (id: string) => {
-    const p = priv.get(id)
-    const total = (p?.purchase_price ?? 0) + (p?.extra_costs ?? 0)
-    return total > 0 ? total : null
-  }
-  const salePrice = (v: Row) => priv.get(v.id)?.sale_price ?? (v.status === 'sold' ? v.price : null)
-
-  // ── Summary ──
-  const forSale = all.filter((v) => v.status === 'published' || v.status === 'reserved')
-  const sold = all.filter((v) => v.status === 'sold')
-  const unsold = all.filter((v) => v.status !== 'sold')
-  const listValue = forSale.reduce((s, v) => s + (v.price ?? 0), 0)
-  const invested = unsold.reduce((s, v) => s + (cost(v.id) ?? 0), 0)
-  const revenue = sold.reduce((s, v) => s + (salePrice(v) ?? 0), 0)
-  const realized = sold.reduce((s, v) => {
-    const c = cost(v.id)
-    const p = salePrice(v)
-    return c !== null && p !== null ? s + (p - c) : s
-  }, 0)
-
-  const activeCount = all.filter((v) => ['published', 'reserved', 'hidden', 'draft'].includes(v.status)).length
+  const activeCount = all.filter((v) => (ACTIVE_STATUSES as readonly string[]).includes(v.status)).length
   const atLimit = activeCount >= seller.max_vehicles
   const featuredCount = all.filter((v) => v.featured).length
   const profileIncomplete = !seller.whatsapp
 
-  const shown = vista === 'venta' ? unsold : vista === 'vendidos' ? sold : all
-  const cols = '1fr 104px 108px 108px 118px 56px 84px'
+  const groups = {
+    todos: all,
+    venta: all.filter((v) => v.status === 'published' || v.status === 'reserved'),
+    borradores: all.filter((v) => v.status === 'draft' || v.status === 'hidden'),
+    vendidos: all.filter((v) => v.status === 'sold'),
+  }
+  const shown = groups[vista as keyof typeof groups] ?? all
+  const cols = '64px 1fr 108px 120px 64px 72px 168px'
+  const cover = (v: Row) => sortPhotos(v.photos)[0]?.url
 
   return (
     <div className="p-4 md:p-8 max-w-6xl">
@@ -98,7 +81,7 @@ export default async function VendorInventarioPage({
           className="mb-6 px-4 py-3.5 rounded-[6px] text-[13px] flex items-center justify-between gap-3 flex-wrap"
           style={{ background: '#fff8f0', border: '0.5px solid #fde4c4', color: '#92400e' }}
         >
-          <span>Completa tu perfil (nombre y WhatsApp) antes de publicar un auto — es lo que verán los compradores.</span>
+          <span>Completa tu perfil (nombre y WhatsApp) antes de publicar: es lo que verán los compradores.</span>
           <Link href="/vendedor/perfil" className="shrink-0 inline-flex items-center h-8 px-4 rounded-[4px] text-[12px] font-[500] bg-orange text-white hover:bg-orange-deep transition-colors">
             Completar perfil
           </Link>
@@ -126,128 +109,90 @@ export default async function VendorInventarioPage({
           </div>
         </div>
         {atLimit ? (
-          <div className="inline-flex items-center gap-2 h-10 px-5 rounded-[4px] text-[13px] font-[500] bg-gray-100 text-text-muted cursor-not-allowed">
-            Límite alcanzado
-          </div>
+          <Link href="/vendedor/plan" className="inline-flex items-center gap-2 h-10 px-5 rounded-[4px] text-[13px] font-[500] bg-gray-100 text-text-muted">
+            Límite alcanzado · ver plan
+          </Link>
         ) : (
           <Link href="/vendedor/inventario/nuevo" className="inline-flex items-center gap-2 h-10 px-5 bg-orange text-white rounded-[4px] text-[13px] font-[500] hover:bg-orange-deep transition-colors">
             <Plus size={14} />
-            Agregar auto
+            Publicar auto
           </Link>
         )}
       </div>
 
-      {/* Summary */}
-      <div
-        className="grid grid-cols-2 lg:grid-cols-4 gap-px rounded-[6px] overflow-hidden mb-6"
-        style={{ border: '0.5px solid var(--gray-line)', background: 'var(--gray-line)' }}
-      >
-        {[
-          { label: 'En venta', value: String(forSale.length), sub: listValue ? `${fmtPrice(listValue)} publicados` : 'Sin autos publicados' },
-          { label: 'Invertido en inventario', value: invested ? fmtPrice(invested) : '—', sub: toolsReady ? 'Compra + gastos de lo no vendido' : 'Registra costos en cada auto' },
-          { label: 'Vendidos', value: String(sold.length), sub: revenue ? `${fmtPrice(revenue)} en ventas` : 'Aún sin ventas' },
-          { label: 'Ganancia realizada', value: realized ? fmtPrice(realized) : '—', sub: 'Ventas con costos registrados', tone: realized > 0 ? 'var(--color-teal)' : realized < 0 ? '#dc2626' : undefined },
-        ].map((s, i) => (
-          <div
-            key={s.label}
-            className="bg-white px-4 md:px-5 py-4 flex flex-col gap-1 min-w-0"
+      {/* View tabs */}
+      <div className="flex gap-1 mb-3 overflow-x-auto -mx-1 px-1">
+        {VIEWS.map((t) => (
+          <Link
+            key={t.key}
+            href={`/vendedor/inventario${t.key === 'todos' ? '' : `?vista=${t.key}`}`}
+            className="shrink-0 px-3.5 py-1.5 rounded-[4px] text-[13px] font-[500] transition-colors"
+            style={vista === t.key ? { background: '#012538', color: '#fff' } : { color: 'var(--color-text-muted)' }}
           >
-            <span className="text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500]">{s.label}</span>
-            <span className="text-[22px] font-[600] tracking-tight tabular-nums" style={{ color: s.tone }}>{s.value}</span>
-            <span className="text-[11.5px] text-text-muted">{s.sub}</span>
-          </div>
+            {t.label} <span className="opacity-60 tabular-nums">{groups[t.key].length}</span>
+          </Link>
         ))}
       </div>
 
-      {atLimit && (
-        <div className="mb-5 px-4 py-3 rounded-[6px] text-[13px]" style={{ background: '#fef2f2', border: '0.5px solid #fecaca', color: '#991b1b' }}>
-          Has alcanzado el límite de tu plan ({seller.max_vehicles} autos). Contacta al administrador para ampliar tu plan.
-        </div>
-      )}
-
-      {/* View tabs */}
-      <div className="flex gap-1 mb-3">
-        {VIEWS.map((t) => {
-          const n = t.key === 'venta' ? unsold.length : t.key === 'vendidos' ? sold.length : all.length
-          return (
-            <Link
-              key={t.key}
-              href={`/vendedor/inventario${t.key === 'todos' ? '' : `?vista=${t.key}`}`}
-              className="px-3.5 py-1.5 rounded-[4px] text-[13px] font-[500] transition-colors"
-              style={vista === t.key ? { background: '#012538', color: '#fff' } : { color: 'var(--color-text-muted)' }}
-            >
-              {t.label} <span className="opacity-60 tabular-nums">{n}</span>
-            </Link>
-          )
-        })}
-      </div>
-
       <div className="bg-white rounded-[6px] overflow-hidden" style={{ border: '0.5px solid var(--gray-line)' }}>
-        <div>
-          <div
-            className="hidden md:grid text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500] px-5 py-3"
-            style={{ gridTemplateColumns: cols, background: 'var(--color-surface-alt)', borderBottom: '0.5px solid var(--gray-line)' }}
-          >
-            <span>Vehículo</span><span>Estado</span><span>Precio</span><span>Inversión</span><span>Ganancia</span><span>Docs</span><span />
+        <div
+          className="hidden md:grid gap-4 text-[11px] text-text-muted uppercase tracking-[0.1em] font-[500] px-5 py-3"
+          style={{ gridTemplateColumns: cols, background: 'var(--color-surface-alt)', borderBottom: '0.5px solid var(--gray-line)' }}
+        >
+          <span /><span>Vehículo</span><span>Estado</span><span>Precio</span><span>Fotos</span><span>Vistas</span><span />
+        </div>
+
+        {shown.length === 0 && (
+          <div className="px-5 py-12 text-center text-[14px] text-text-muted">
+            {vista === 'vendidos' ? 'Aún no registras ventas.' : vista === 'borradores' ? 'No tienes borradores.' : 'Aún no tienes autos registrados.'}
           </div>
+        )}
 
-          {shown.length === 0 && (
-            <div className="px-5 py-12 text-center text-[14px] text-text-muted">
-              {vista === 'vendidos' ? 'Aún no registras ventas.' : 'Aún no tienes autos registrados.'}
-            </div>
-          )}
-
-          {shown.map((v, i) => {
-            const c = cost(v.id)
-            const ref = v.status === 'sold' ? salePrice(v) : v.price
-            const profit = c !== null && ref ? ref - c : null
-            const docs = docCount.get(v.id) ?? 0
-            const shownPrice = v.status === 'sold' && salePrice(v) ? salePrice(v) : v.price
-            return (
-              <div key={v.id} style={{ borderTop: i === 0 ? 'none' : '0.5px solid var(--gray-line)', opacity: v.status === 'sold' ? 0.75 : 1 }}>
-              {/* Phone: tappable card */}
-              <Link href={`/vendedor/inventario/${v.id}/editar`} className="md:hidden flex flex-col gap-2.5 px-4 py-3.5 active:bg-surface-alt">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-[15px] font-[500] truncate flex items-center gap-1.5">
+        {shown.map((v, i) => {
+          const src = cover(v)
+          const n = v.photos.length
+          const seen = views.get(v.id) ?? 0
+          const thumb = (
+            <span className="relative block w-16 h-12 rounded-[3px] overflow-hidden bg-surface-alt shrink-0">
+              {src ? <Image src={src} alt="" fill sizes="64px" className="object-cover" /> : <CarPlaceholder seed={v.id} className="w-full h-full" />}
+            </span>
+          )
+          return (
+            <div key={v.id} style={{ borderTop: i === 0 ? 'none' : '0.5px solid var(--gray-line)', opacity: v.status === 'sold' ? 0.75 : 1 }}>
+              {/* Phone */}
+              <div className="md:hidden flex flex-col gap-3 px-4 py-3.5">
+                <Link href={`/vendedor/inventario/${v.id}/editar`} className="flex items-start gap-3">
+                  {thumb}
+                  <span className="min-w-0 flex-1">
+                    <span className="text-[15px] font-[500] truncate flex items-center gap-1.5">
                       {v.featured && <Star size={12} className="text-orange shrink-0" fill="currentColor" />}
                       {v.title}
-                    </div>
-                    <div className="text-[12px] text-text-muted mt-0.5">
+                    </span>
+                    <span className="block text-[12px] text-text-muted mt-0.5">
                       {[v.year, v.mileage ? fmtKm(v.mileage) : null].filter(Boolean).join(' · ')}
-                    </div>
-                  </div>
-                  <Pencil size={14} className="text-text-muted shrink-0 mt-1" />
+                    </span>
+                    <span className="flex items-center gap-2 flex-wrap mt-1.5">
+                      <StatusPill status={v.status} />
+                      {v.price ? <span className="text-[14px] font-[500] tabular-nums">{fmtPrice(v.price)}</span> : null}
+                    </span>
+                  </span>
+                </Link>
+                <div className="flex items-center gap-2">
+                  <span className="text-[12px] text-text-muted inline-flex items-center gap-1 mr-auto">
+                    <Camera size={12} /> {n} · <Eye size={12} /> {seen}
+                  </span>
+                  <Link href={`/vendedor/redes/${v.id}`} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-[4px] text-[12px] font-[500]" style={{ border: '0.5px solid var(--gray-line-strong)' }}>
+                    <ImagePlus size={12} /> Post
+                  </Link>
+                  <Link href={`/vendedor/inventario/${v.id}/editar`} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-[4px] text-[12px] font-[500] bg-text-base text-white">
+                    <Pencil size={12} /> Editar
+                  </Link>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <StatusPill status={v.status} />
-                  {shownPrice ? <span className="text-[14px] font-[500] tabular-nums">{fmtPrice(shownPrice)}</span> : null}
-                </div>
-                {(c !== null || docs > 0) && (
-                  <div className="grid grid-cols-3 gap-2 text-[12px] rounded-[4px] px-3 py-2" style={{ background: 'var(--color-surface)' }}>
-                    <div>
-                      <div className="text-[10px] uppercase tracking-[0.08em] text-text-muted">Inversión</div>
-                      <div className="tabular-nums">{c !== null ? fmtPrice(c) : '—'}</div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] uppercase tracking-[0.08em] text-text-muted">{v.status === 'sold' ? 'Ganancia' : 'Gan. estimada'}</div>
-                      <div className="tabular-nums font-[500]" style={{ color: profit === null ? undefined : profit >= 0 ? 'var(--color-teal)' : '#dc2626' }}>
-                        {profit !== null ? fmtPrice(profit) : '—'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] uppercase tracking-[0.08em] text-text-muted">Docs</div>
-                      <div className="tabular-nums inline-flex items-center gap-1"><FileText size={12} /> {docs}</div>
-                    </div>
-                  </div>
-                )}
-              </Link>
+              </div>
 
-              {/* Desktop: table row */}
-              <div
-                className="hidden md:grid items-center px-5 py-4 gap-4"
-                style={{ gridTemplateColumns: cols }}
-              >
+              {/* Desktop */}
+              <div className="hidden md:grid items-center px-5 py-3 gap-4" style={{ gridTemplateColumns: cols }}>
+                {thumb}
                 <div className="min-w-0">
                   <div className="text-[14px] font-[500] truncate flex items-center gap-1.5">
                     {v.featured && <Star size={12} className="text-orange shrink-0" fill="currentColor" />}
@@ -259,38 +204,36 @@ export default async function VendorInventarioPage({
                 </div>
                 <StatusPill status={v.status} />
                 <div className="text-[13px] font-[500] tabular-nums">
-                  {v.status === 'sold' && salePrice(v) ? fmtPrice(salePrice(v)!) : v.price ? fmtPrice(v.price) : <span className="text-text-muted">—</span>}
+                  {v.price ? fmtPrice(v.price) : <span className="text-orange font-[400]">Sin precio</span>}
                 </div>
-                <div className="text-[13px] tabular-nums text-text-muted">{c !== null ? fmtPrice(c) : '—'}</div>
-                <div className="text-[13px] font-[500] tabular-nums" style={{ color: profit === null ? undefined : profit >= 0 ? 'var(--color-teal)' : '#dc2626' }}>
-                  {profit !== null ? fmtPrice(profit) : <span className="text-text-muted font-[400]">—</span>}
-                  {profit !== null && v.status !== 'sold' && <span className="block text-[10.5px] text-text-muted font-[400]">estimada</span>}
+                <div className="text-[13px] tabular-nums inline-flex items-center gap-1" style={{ color: n < 4 ? 'var(--color-orange-deep)' : 'var(--color-text-muted)' }}>
+                  <Camera size={13} /> {n}
                 </div>
-                <div className="text-[13px] text-text-muted inline-flex items-center gap-1 tabular-nums">
-                  <FileText size={13} /> {docs}
+                <div className="text-[13px] text-text-muted tabular-nums inline-flex items-center gap-1">
+                  <Eye size={13} /> {seen}
                 </div>
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-1.5">
+                  <Link
+                    href={`/vendedor/redes/${v.id}`}
+                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-[4px] text-[12px] font-[500] transition-colors hover:bg-surface-alt"
+                    style={{ border: '0.5px solid var(--gray-line-strong)' }}
+                  >
+                    <ImagePlus size={12} /> Post
+                  </Link>
                   <Link
                     href={`/vendedor/inventario/${v.id}/editar`}
                     className="inline-flex items-center gap-1.5 h-8 px-3 rounded-[4px] text-[12px] font-[500] transition-colors hover:bg-surface-alt"
                     style={{ border: '0.5px solid var(--gray-line-strong)' }}
                   >
-                    <Pencil size={12} />
-                    Abrir
+                    <Pencil size={12} /> Editar
                   </Link>
                 </div>
               </div>
-              </div>
-            )
-          })}
-        </div>
+            </div>
+          )
+        })}
       </div>
-
-      {!toolsReady && (
-        <p className="text-[12px] text-text-muted mt-4">
-          Las columnas de inversión, ganancia y documentos se activan cuando la administración corra la migración 006.
-        </p>
-      )}
+      <p className="text-[12px] text-text-muted mt-3">Vistas de los últimos 30 días. Inversión y ganancias están en «Ventas y ganancias».</p>
     </div>
   )
 }

@@ -1,18 +1,32 @@
 'use client'
 
-import { Car, User } from 'lucide-react'
+import { Car, Home, ImagePlus, Wallet, FolderLock, User, BadgeCheck, Menu } from 'lucide-react'
 import { PortalNav, type PortalNavItem } from '@/components/ui/portal-nav'
 import type { Seller } from '@/lib/supabase/database.types'
 
 const NAV: PortalNavItem[] = [
-  { href: '/vendedor/inventario', label: 'Mis autos', icon: Car },
-  { href: '/vendedor/perfil', label: 'Mi perfil', icon: User },
+  { href: '/vendedor', label: 'Inicio', icon: Home, exact: true, group: 'Mi negocio' },
+  { href: '/vendedor/inventario', label: 'Mis autos', short: 'Autos', icon: Car, group: 'Mi negocio' },
+  { href: '/vendedor/redes', label: 'Redes sociales', short: 'Redes', icon: ImagePlus, group: 'Mi negocio' },
+  { href: '/vendedor/ventas', label: 'Ventas y ganancias', short: 'Ventas', icon: Wallet, group: 'Mi negocio' },
+  { href: '/vendedor/documentos', label: 'Documentos', icon: FolderLock, group: 'Mi negocio' },
+  { href: '/vendedor/perfil', label: 'Mi perfil', icon: User, group: 'Cuenta' },
+  { href: '/vendedor/plan', label: 'Mi plan', icon: BadgeCheck, group: 'Cuenta' },
+]
+
+// Phone: the four daily sections + "Más" for the rest
+const TABS: PortalNavItem[] = [
+  NAV[0],
+  NAV[1],
+  NAV[2],
+  NAV[3],
+  { href: '/vendedor/mas', label: 'Más', icon: Menu },
 ]
 
 const PLAN_LABEL: Record<string, string> = { basico: 'Básico', pro: 'Pro', premium: 'Premium' }
 const PLAN_COLOR: Record<string, string> = { basico: '#9ca3af', pro: '#3fa9c5', premium: '#FB9833' }
 
-export function VendorSidebar({ seller }: { seller: Seller }) {
+export function VendorSidebar({ seller, canAdd }: { seller: Seller; canAdd: boolean }) {
   const planColor = PLAN_COLOR[seller.plan] ?? '#9ca3af'
   const planBadge = (
     <span
@@ -26,10 +40,12 @@ export function VendorSidebar({ seller }: { seller: Seller }) {
   return (
     <PortalNav
       nav={NAV}
-      homeHref="/vendedor/inventario"
+      tabs={TABS}
+      homeHref="/vendedor"
+      cta={canAdd ? { href: '/vendedor/inventario/nuevo', label: 'Publicar auto' } : undefined}
       sidebarExtra={
         <div className="px-4 py-3" style={{ borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
-          <div className="text-[11px] text-white/40 mb-1 truncate">{seller.business_name ?? seller.name}</div>
+          <div className="text-[12px] text-white/70 font-[500] mb-1 truncate">{seller.business_name ?? seller.name}</div>
           <div className="flex items-center gap-2 flex-wrap">
             {planBadge}
             {seller.payment_status === 'atrasado' && (

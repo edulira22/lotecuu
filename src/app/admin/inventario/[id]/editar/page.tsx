@@ -42,7 +42,7 @@ export default async function EditarVehiculoPage({
           {vehicle.title}
         </h1>
         <Link
-          href={`/admin/inventario/${vehicle.id}/redes`}
+          href={`/admin/redes/${vehicle.id}`}
           className="inline-flex items-center gap-2 h-10 px-4 rounded-[4px] bg-white text-[13px] font-[500] hover:bg-surface-alt transition-colors shrink-0"
           style={{ border: '0.5px solid var(--gray-line-strong)' }}
         >
