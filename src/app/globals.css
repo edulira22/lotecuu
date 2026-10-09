@@ -76,3 +76,8 @@ body {
 /* Hide scrollbars on scroll containers */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
+
+/* Phone splash: hidden once seen this visit; fades out on its own if JS never runs */
+.splash-seen #lc-splash { display: none; }
+#lc-splash { animation: lc-splash-out 0.3s ease 2.6s forwards; }
+@keyframes lc-splash-out { to { opacity: 0; visibility: hidden; } }
